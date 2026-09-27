@@ -473,3 +473,79 @@ def build_docx(data, items, today, weather=None):
                 add_story(doc, s, items)
     return doc
 
+
+# ---------- main ----------
+
+DESKTOP_COPY = Path.home() / "Desktop" / "Сутрешен вестник.docx"
+
+
+def notify(message):
+    """Малко известие в ъгъла на екрана на Mac."""
+    script = 'display notification "{}" with title "Сутрешен вестник"'.format(
+        message.replace('"', "'"))
+    subprocess.run(["osascript", "-e", script], capture_output=True)
+
+
+def wait_for_internet(max_wait=120):
+    """След събуждане Wi-Fi се свързва за няколко секунди, затова изчакваме."""
+    deadline = time.time() + max_wait
+    while True:
+        try:
+            urllib.request.urlopen("https://api.open-meteo.com", timeout=5)
+            return
+        except urllib.error.HTTPError:
+            return  # сървърът отговори, значи има интернет
+        except Exception:
+            if time.time() > deadline:
+                log.warning("Няма интернет след %d секунди, опитваме все пак", max_wait)
+                return
+            time.sleep(5)
+
+
+def main():
+    auto = "--auto" in sys.argv
+    today = datetime.now()
+    out = NEWSPAPERS / "{}.docx".format(today.strftime("%Y-%m-%d"))
+    if auto and "--force" not in sys.argv and (out.exists() or today.hour < 5):
+        return  # днешният брой вече е готов или е твърде рано
+
+    setup_logging()
+    log.info("=== Нов брой%s ===", " (автоматично)" if auto else "")
+    try:
+        NEWSPAPERS.mkdir(exist_ok=True)
+        if auto:
+            wait_for_internet()
+        cache = NEWSPAPERS / "{}.json".format(today.strftime("%Y-%m-%d"))
+        config = load_config()
+        place = config.get("weather")
+        weather = fetch_weather(place) if place else None
+
+        if "--redo" in sys.argv and cache.exists():
+            # Само прередактира документа от вече обобщените новини, без нов Claude.
+            saved = json.loads(cache.read_text(encoding="utf-8"))
+            data, items = saved["data"], saved["items"]
+        else:
+            items = fetch_all(config)
+            if not items:
+                raise RuntimeError("Нито един източник не върна новини")
+            items = dedupe(items)
+            log.info("Общо %d новини след махане на дубликати", len(items))
+            data = summarize(items, config["settings"])
+            cache.write_text(json.dumps({"data": data, "items": items}, ensure_ascii=False),
+                             encoding="utf-8")
+
+        build_docx(data, items, today, weather).save(out)
+        shutil.copyfile(out, BASE / "latest.docx")
+        shutil.copyfile(out, DESKTOP_COPY)
+        log.info("Готово: %s (%d истории)", out, len(data["stories"]))
+        if auto:
+            notify("Готов е! {} истории — файлът е на Desktop.".format(len(data["stories"])))
+    except Exception as e:
+        log.exception("Вестникът не беше създаден")
+        if auto:
+            notify("Грешка: {}. Виж logs/vestnik.log".format(str(e)[:80]))
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
