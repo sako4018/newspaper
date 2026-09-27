@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+logs/
+newspapers/
+latest.docx
+.DS_Store
