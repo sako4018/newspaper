@@ -64,3 +64,51 @@ def load_config():
     with open(BASE / "sources.yaml", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
+
+# ---------- 1. Събиране ----------
+
+def clean_text(text, limit=300):
+    text = re.sub(r"<[^>]+>", " ", text or "")
+    text = html.unescape(re.sub(r"\s+", " ", text)).strip()
+    return text[:limit] + ("…" if len(text) > limit else "")
+
+
+def fetch_source(source, since, limit):
+    """Връща списък с новини от един източник. При грешка връща празен списък."""
+    try:
+        req = urllib.request.Request(source["url"], headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            feed = feedparser.parse(resp.read())
+        items = []
+        for entry in feed.entries:
+            parsed = entry.get("published_parsed") or entry.get("updated_parsed")
+            if parsed and calendar.timegm(parsed) < since:
+                continue
+            title = clean_text(entry.get("title"), 200)
+            if not title or not entry.get("link"):
+                continue
+            items.append({
+                "title": title,
+                "summary": clean_text(entry.get("summary")),
+                "link": entry.get("link"),
+                "source": source["name"],
+                "section": source.get("section", ""),
+            })
+            if len(items) >= limit:
+                break
+        log.info("OK   %-14s %d новини", source["name"], len(items))
+        return items
+    except Exception as e:
+        log.error("ГРЕШКА %-14s %s: %s", source["name"], source["url"], e)
+        return []
+
+
+def fetch_all(config):
+    settings = config["settings"]
+    since = time.time() - settings["hours_back"] * 3600
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = pool.map(
+            lambda s: fetch_source(s, since, settings["per_source_limit"]),
+            config["sources"])
+    return [item for items in results for item in items]
+
