@@ -266,3 +266,95 @@ def weather_tip(w):
         return "Силен вятър — внимавай навън."
     return "Приятен ден!"
 
+
+# ---------- 5. Word документ ----------
+
+def bg_date(d):
+    return "{}, {} {} {} г.".format(WEEKDAYS[d.weekday()].capitalize(), d.day,
+                                    MONTHS[d.month - 1], d.year)
+
+
+def set_font(run, size, bold=False, color=INK, font=FONT):
+    run.font.name = font
+    run.font.size = Pt(size)
+    run.font.bold = bold
+    run.font.color.rgb = color
+    fonts = run._element.get_or_add_rPr().get_or_add_rFonts()
+    for attr in ("w:ascii", "w:hAnsi", "w:cs"):
+        fonts.set(qn(attr), font)
+
+
+def spacing(paragraph, before=0, after=0, line=1.0):
+    fmt = paragraph.paragraph_format
+    fmt.space_before = Pt(before)
+    fmt.space_after = Pt(after)
+    fmt.line_spacing = line
+
+
+def add_border(paragraph, side, size=8, color="1C1A17", style="single", space=1):
+    """Линия над или под параграф (size е в осмини от точка)."""
+    ppr = paragraph._p.get_or_add_pPr()
+    borders = ppr.find(qn("w:pBdr"))
+    if borders is None:
+        borders = OxmlElement("w:pBdr")
+        ppr.append(borders)
+    line = OxmlElement("w:" + side)
+    line.set(qn("w:val"), style)
+    line.set(qn("w:sz"), str(size))
+    line.set(qn("w:space"), str(space))
+    line.set(qn("w:color"), color)
+    borders.append(line)
+
+
+def add_shading(cell, fill):
+    shd = OxmlElement("w:shd")
+    shd.set(qn("w:val"), "clear")
+    shd.set(qn("w:color"), "auto")
+    shd.set(qn("w:fill"), fill)
+    cell._tc.get_or_add_tcPr().append(shd)
+
+
+def add_hyperlink(paragraph, url, text, size=7.5):
+    r_id = paragraph.part.relate_to(url, RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+    link = OxmlElement("w:hyperlink")
+    link.set(qn("r:id"), r_id)
+    run = OxmlElement("w:r")
+    rpr = OxmlElement("w:rPr")
+    fonts = OxmlElement("w:rFonts")
+    for attr in ("w:ascii", "w:hAnsi", "w:cs"):
+        fonts.set(qn(attr), FONT)
+    rpr.append(fonts)
+    color = OxmlElement("w:color")
+    color.set(qn("w:val"), "8B1E1E")
+    rpr.append(color)
+    sz = OxmlElement("w:sz")
+    sz.set(qn("w:val"), str(int(size * 2)))
+    rpr.append(sz)
+    run.append(rpr)
+    t = OxmlElement("w:t")
+    t.text = text
+    t.set(qn("xml:space"), "preserve")
+    run.append(t)
+    link.append(run)
+    paragraph._p.append(link)
+
+
+def set_columns(section, num, space_cm=0.6):
+    sect_pr = section._sectPr
+    cols = sect_pr.find(qn("w:cols"))
+    if cols is None:
+        cols = OxmlElement("w:cols")
+        sect_pr.append(cols)
+    cols.set(qn("w:num"), str(num))
+    cols.set(qn("w:space"), str(int(space_cm * 567)))
+
+
+def story_links(story, items):
+    """По един линк от всеки източник."""
+    links, seen = [], set()
+    for i in story.get("ids", []):
+        if isinstance(i, int) and 0 <= i < len(items) and items[i]["source"] not in seen:
+            seen.add(items[i]["source"])
+            links.append((items[i]["source"], items[i]["link"]))
+    return links
+
