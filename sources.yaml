@@ -1,0 +1,26 @@
+# RSS източници за „Сутрешен вестник“.
+# За да добавиш източник: копирай един ред и смени name и url.
+# За да махнеш източник: изтрий реда или сложи # пред него.
+# section е подсказка за Claude в коя рубрика е най-вероятно новината.
+
+sources:
+  # --- България ---
+  - {name: "БТА",       url: "https://www.bta.bg/bg/rss/free",  section: "България"}
+  - {name: "Дневник",   url: "https://www.dnevnik.bg/rss/",     section: "България"}
+  - {name: "Медиапул",  url: "https://www.mediapool.bg/rss/",   section: "България"}
+
+  # --- Свят ---
+  - {name: "BBC World",    url: "https://feeds.bbci.co.uk/news/world/rss.xml", section: "Свят"}
+  - {name: "The Guardian", url: "https://www.theguardian.com/world/rss",       section: "Свят"}
+
+  # --- Армения ---
+  - {name: "News.am",   url: "https://news.am/eng/rss/",        section: "Армения"}
+
+  # --- Технологии и AI ---
+  - {name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index", section: "Технологии и AI"}
+
+  max_stories: 17         # колко новини да има във вестника
+  hours_back: 24           # колко часа назад да гледаме
+  per_source_limit: 25     # максимум новини от един източник
+  interests: "важна политика, България, Армения, технологии и изкуствен интелект (AI)"
+  claude_model: "sonnet"
