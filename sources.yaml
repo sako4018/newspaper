@@ -19,6 +19,12 @@ sources:
   # --- Технологии и AI ---
   - {name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index", section: "Технологии и AI"}
 
+# Времето: град и координати (намираш ги в Google Maps с десен клик върху мястото).
+# Пример за Ереван: {name: "Ереван", lat: 40.18, lon: 44.51}
+weather: {name: "Пловдив", lat: 42.14, lon: 24.75}
+
+# Настройки
+settings:
   max_stories: 17         # колко новини да има във вестника
   hours_back: 24           # колко часа назад да гледаме
   per_source_limit: 25     # максимум новини от един източник

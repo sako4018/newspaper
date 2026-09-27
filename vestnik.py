@@ -204,3 +204,65 @@ def summarize(items, settings):
             log.warning("Опит %d неуспешен: %s", attempt, e)
     raise RuntimeError("Claude не успя да обобщи новините: {}".format(last_error))
 
+
+# ---------- 4. Времето ----------
+
+WEATHER_CODES = [
+    ((0,), "Ясно"), ((1,), "Предимно ясно"), ((2,), "Променлива облачност"),
+    ((3,), "Облачно"), ((45, 48), "Мъгла"), ((51, 53, 55, 56, 57), "Ръмеж"),
+    ((61,), "Слаб дъжд"), ((63,), "Дъжд"), ((65,), "Силен дъжд"), ((66, 67), "Леден дъжд"),
+    ((71, 73, 75, 77), "Сняг"), ((80, 81, 82), "Превалявания"),
+    ((85, 86), "Снежни превалявания"), ((95, 96, 99), "Гръмотевични бури"),
+]
+
+
+def weather_text(code):
+    for codes, text in WEATHER_CODES:
+        if code in codes:
+            return text
+    return "Променливо"
+
+
+def fetch_weather(place):
+    """Прогноза за днес от Open-Meteo (безплатно, без ключ). При грешка връща None."""
+    url = ("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+           "&daily=weather_code,temperature_2m_max,temperature_2m_min,"
+           "precipitation_probability_max,wind_speed_10m_max"
+           "&hourly=temperature_2m&timezone=auto&forecast_days=1").format(**place)
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            raw = json.loads(resp.read())
+        daily, hourly = raw["daily"], raw["hourly"]["temperature_2m"]
+        weather = {
+            "city": place["name"],
+            "text": weather_text(daily["weather_code"][0]),
+            "max": round(daily["temperature_2m_max"][0]),
+            "min": round(daily["temperature_2m_min"][0]),
+            "rain": daily["precipitation_probability_max"][0] or 0,
+            "wind": round(daily["wind_speed_10m_max"][0]),
+            "morning": round(hourly[8]),
+            "noon": round(hourly[14]),
+            "evening": round(hourly[20]),
+        }
+        log.info("OK   Времето в %s: %s, %d°/%d°", place["name"], weather["text"],
+                 weather["max"], weather["min"])
+        return weather
+    except Exception as e:
+        log.error("ГРЕШКА времето за %s: %s", place.get("name"), e)
+        return None
+
+
+def weather_tip(w):
+    if w["rain"] >= 50:
+        return "Вземи чадър."
+    if w["min"] <= 0:
+        return "Облечи се топло — възможно е заледяване."
+    if w["max"] >= 30:
+        return "Горещо е — пий повече вода."
+    if w["max"] - w["min"] >= 10:
+        return "Хладна сутрин, топъл следобед — облечи се на слоеве."
+    if w["wind"] >= 40:
+        return "Силен вятър — внимавай навън."
+    return "Приятен ден!"
+
