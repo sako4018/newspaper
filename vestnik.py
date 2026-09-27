@@ -129,3 +129,78 @@ def dedupe(items):
         kept.append(item)
     return kept
 
+
+# ---------- 3. Обобщаване с Claude ----------
+
+PROMPT = """Ти си главен редактор на кратък сутрешен вестник на български език.
+Читателят се интересува най-вече от: $interests.
+
+По-долу има списък с новини от последните 24 часа. Всяка започва с номер в [квадратни скоби].
+
+Задачи:
+1. Обедини новините, които разказват една и съща история (от различни източници), в една.
+2. Избери около $max_stories най-важни истории. Предпочитай значими събития пред дребни.
+   Включи поне 2 за Армения и поне 2 за технологии/AI, ако има подходящи.
+3. За всяка история напиши на български:
+   - "title": кратко и ясно заглавие (до 12 думи);
+   - "summary": неутрално и фактологично резюме, без измислици. Вестникът трябва да се
+     събере на ЕДНА страница: за "top" историите 3 изречения (до 55 думи), за останалите
+     2–3 изречения (до 40 думи). Всички резюмета общо — до 600 думи;
+   - "section": една от рубриките: $sections;
+   - "top": true за 3–5-те най-важни истории за деня, иначе false;
+   - "ids": номерата на всички използвани новини от списъка.
+4. Напиши "day_in_three": обобщение на деня точно в 3 кратки изречения (общо до 60 думи).
+
+Отговори САМО с валиден JSON, без обяснения и без ```, в този формат:
+{"day_in_three": "...", "stories": [{"title": "...", "summary": "...", "section": "...", "top": true, "ids": [1, 5]}]}
+
+НОВИНИ:
+$news
+"""
+
+
+def find_claude():
+    return shutil.which("claude") or str(Path.home() / ".local/bin/claude")
+
+
+def extract_json(text):
+    start, end = text.find("{"), text.rfind("}")
+    if start == -1 or end == -1:
+        raise ValueError("В отговора няма JSON")
+    return json.loads(text[start:end + 1])
+
+
+def summarize(items, settings):
+    news = "\n".join(
+        "[{}] ({}, {}) {} — {}".format(i, it["source"], it["section"], it["title"], it["summary"])
+        for i, it in enumerate(items))
+    prompt = Template(PROMPT).substitute(
+        interests=settings["interests"],
+        max_stories=settings["max_stories"],
+        sections=", ".join(SECTIONS),
+        news=news)
+
+    cmd = [find_claude(), "-p", "--output-format", "json",
+           "--model", settings.get("claude_model", "sonnet"),
+           "--tools", "", "--no-session-persistence"]
+    last_error = None
+    for attempt in (1, 2):
+        try:
+            log.info("Claude обобщава %d новини (опит %d)...", len(items), attempt)
+            proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
+                                  timeout=900, cwd=tempfile.gettempdir())
+            if proc.returncode != 0:
+                raise RuntimeError("claude върна код {}: {}".format(
+                    proc.returncode, (proc.stderr or proc.stdout)[:500]))
+            outer = json.loads(proc.stdout)
+            if outer.get("is_error"):
+                raise RuntimeError("claude грешка: {}".format(outer.get("result")))
+            data = extract_json(outer["result"])
+            if not data.get("stories"):
+                raise ValueError("Няма новини в отговора")
+            return data
+        except Exception as e:
+            last_error = e
+            log.warning("Опит %d неуспешен: %s", attempt, e)
+    raise RuntimeError("Claude не успя да обобщи новините: {}".format(last_error))
+
