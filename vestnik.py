@@ -358,3 +358,118 @@ def story_links(story, items):
             links.append((items[i]["source"], items[i]["link"]))
     return links
 
+
+def add_heading(doc, text, color=INK):
+    p = doc.add_paragraph()
+    spacing(p, before=4, after=1.5)
+    add_border(p, "bottom", size=8, color=str(color))
+    p.paragraph_format.keep_with_next = True
+    set_font(p.add_run(text.upper()), 8.5, bold=True, color=color)
+
+
+def add_story(doc, story, items, big=False):
+    title = doc.add_paragraph()
+    spacing(title, before=3, after=0.5, line=1.0)
+    title.paragraph_format.keep_with_next = True
+    set_font(title.add_run(story["title"]), 10.5 if big else 9.5, bold=True)
+
+    body = doc.add_paragraph()
+    spacing(body, after=1, line=1.0)
+    body.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    set_font(body.add_run(story["summary"] + " "), 8.5)
+    for n, (name, url) in enumerate(story_links(story, items)):
+        if n:
+            set_font(body.add_run(" · "), 7.5, color=MUTED)
+        add_hyperlink(body, url, name)
+
+
+def add_day_box(doc, data, weather):
+    """Отгоре: „Денят с 3 изречения“ вляво и времето за деня вдясно."""
+    table = doc.add_table(rows=1, cols=2 if weather else 1)
+    table.autofit = False
+    widths = [Cm(12.2), Cm(6.8)] if weather else [Cm(19)]
+    for cell, width in zip(table.rows[0].cells, widths):
+        cell.width = width
+        cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+
+    left = table.rows[0].cells[0]
+    add_shading(left, "F3EEE3")
+    label = left.paragraphs[0]
+    spacing(label, before=4, after=2)
+    set_font(label.add_run("ДЕНЯТ С 3 ИЗРЕЧЕНИЯ"), 7.5, bold=True, color=ACCENT)
+    text = left.add_paragraph()
+    spacing(text, after=4, line=1.1)
+    set_font(text.add_run(data.get("day_in_three", "")), 9.5)
+
+    if weather:
+        right = table.rows[0].cells[1]
+        head = right.paragraphs[0]
+        spacing(head, before=2, after=1)
+        head.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        set_font(head.add_run("ВРЕМЕТО ДНЕС · " + weather["city"].upper()), 7.5,
+                 bold=True, color=ACCENT)
+
+        temps = right.add_paragraph()
+        spacing(temps, after=0)
+        temps.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        set_font(temps.add_run("{}°".format(weather["max"])), 22, bold=True)
+        set_font(temps.add_run(" / {}°".format(weather["min"])), 14, color=MUTED)
+
+        for line, size, bold in (
+                (weather["text"], 9.5, True),
+                ("Сутрин {}° · Обед {}° · Вечер {}°".format(
+                    weather["morning"], weather["noon"], weather["evening"]), 8, False),
+                ("Дъжд {}% · Вятър до {} км/ч".format(weather["rain"], weather["wind"]), 8, False),
+                (weather_tip(weather), 8, True)):
+            p = right.add_paragraph()
+            spacing(p, after=1)
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            set_font(p.add_run(line), size, bold=bold)
+
+
+def build_docx(data, items, today, weather=None):
+    doc = Document()
+    section = doc.sections[0]
+    section.page_width, section.page_height = Cm(21), Cm(29.7)
+    for side in ("left_margin", "right_margin"):
+        setattr(section, side, Cm(1.0))
+    section.top_margin = section.bottom_margin = Cm(0.9)
+
+    # Глава на вестника
+    kicker = doc.add_paragraph()
+    spacing(kicker, after=2)
+    add_border(kicker, "bottom", size=4, color="CFC6B4")
+    kicker.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    set_font(kicker.add_run("{}  ·  {} истории  ·  съставен в {}".format(
+        bg_date(today), len(data["stories"]), datetime.now().strftime("%H:%M"))),
+        7.5, color=MUTED)
+
+    name = doc.add_paragraph()
+    spacing(name, after=2)
+    name.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    add_border(name, "bottom", size=12, style="double", space=2)
+    set_font(name.add_run("Сутрешен вестник"), 26, bold=True)
+
+    add_day_box(doc, data, weather)
+
+    # Новините в две колони
+    body = doc.add_section(WD_SECTION.CONTINUOUS)
+    set_columns(body, 2)
+    # Празният параграф, който носи прехода към колоните, да не заема място.
+    breaker = doc.paragraphs[-1]
+    spacing(breaker, after=3, line=Pt(1))
+
+    stories = data["stories"]
+    top = [s for s in stories if s.get("top")]
+    if top:
+        add_heading(doc, "Главното днес", ACCENT)
+        for s in top:
+            add_story(doc, s, items, big=True)
+    for sec_name in SECTIONS:
+        group = [s for s in stories if not s.get("top") and s.get("section") == sec_name]
+        if group:
+            add_heading(doc, sec_name)
+            for s in group:
+                add_story(doc, s, items)
+    return doc
+
