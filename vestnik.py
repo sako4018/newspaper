@@ -112,3 +112,20 @@ def fetch_all(config):
             config["sources"])
     return [item for items in results for item in items]
 
+
+# ---------- 2. Махане на очевидни дубликати ----------
+
+def normalize(title):
+    return re.sub(r"[^\w ]", "", title.lower())
+
+
+def dedupe(items):
+    kept = []
+    for item in items:
+        norm = normalize(item["title"])
+        if any(difflib.SequenceMatcher(None, norm, normalize(k["title"])).ratio() > 0.85
+               for k in kept):
+            continue
+        kept.append(item)
+    return kept
+
