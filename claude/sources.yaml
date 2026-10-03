@@ -7,7 +7,7 @@ sources:
   # --- България ---
   - {name: "БТА",       url: "https://www.bta.bg/bg/rss/free",  section: "България"}
   - {name: "Дневник",   url: "https://www.dnevnik.bg/rss/",     section: "България"}
-  - {name: "Медиапул",  url: "https://www.mediapool.bg/rss/",   section: "България"}
+  - {name: "Медиапул",  url: "https://www.mediapool.bg/feed/",   section: "България"}
   - {name: "Капитал",  url: "https://www.capital.bg/rss/",     section: "България"}
   - {name: "Actualno",  url: "https://www.actualno.com/rss/",   section: "България"}
   - {name: "Club Z",    url: "https://clubz.bg/rss",            section: "България"}
