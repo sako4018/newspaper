@@ -15,7 +15,7 @@ topics:
     sources:
       - {name: "БТА",         url: "https://www.bta.bg/bg/rss/free"}
       - {name: "Дневник",     url: "https://www.dnevnik.bg/rss/"}
-      - {name: "Медиапул",    url: "https://www.mediapool.bg/rss/"}
+      - {name: "Медиапул",    url: "https://www.mediapool.bg/feed/"}
       - {name: "Капитал",     url: "https://www.capital.bg/rss/"}
       - {name: "Actualno",    url: "https://www.actualno.com/rss/"}
       - {name: "Club Z",      url: "https://clubz.bg/rss"}
@@ -27,10 +27,10 @@ topics:
     keywords: [армени, armenia, ереван, yerevan, пашинян, pashinyan, карабах, karabakh, сюник, syunik, азербайджан, azerbaijan, հայաստան, հայ, երևան, փաշինյան, ադրբեջան]
     sources:
       - {name: "News.am",    url: "https://news.am/eng/rss/"}
-      - {name: "News.am RU", url: "https://news.am/rus/rss/"}
+      - {name: "News.am RU", url: "https://news.am/rus/rss/", lang: ru}
       - {name: "Asbarez",    url: "https://asbarez.com/feed/"}
-      - {name: "Azatutyun",  url: "https://www.azatutyun.am/api/"}
-      - {name: "Aravot",     url: "https://www.aravot.am/rss"}
+      - {name: "Azatutyun",  url: "https://www.azatutyun.am/api/", lang: hy}
+      - {name: "Aravot",     url: "https://www.aravot.am/rss", lang: hy}
       - {name: "Hetq",       url: "https://hetq.am/en/rss"}
 
   - id: world

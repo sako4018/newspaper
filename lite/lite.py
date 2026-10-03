@@ -76,6 +76,7 @@ def fetch_source(source, since, limit):
                 "section": source["topic_name"],
                 "topic": source["topic"],
                 "weight": source.get("weight", 1.0),
+                "lang": source.get("lang"),
                 "ts": ts,
             })
             if len(items) >= limit:
@@ -175,7 +176,7 @@ def make_story(group, prefs, hours_back):
             seen.add(it["source"])
             links.append((it["source"], it["link"]))
     return {"title": lead["title"], "summary": text, "section": section, "links": links,
-            "score": score(group, prefs, hours_back)}
+            "lang": lead.get("lang"), "score": score(group, prefs, hours_back)}
 
 
 def keep_relevant(items, topics, selected):
@@ -253,15 +254,20 @@ def translate_stories(stories):
                 argos_package.install_from_path(pkg.download())
     for s in stories:
         original = s["title"]
+        if s.get("lang") == "hy":   # за арменски няма модел
+            s["note"] = "HY · на арменски, без превод"
+            continue
         for key in ("title", "summary"):
-            lang = detect_lang(s[key])
+            lang = s.get("lang") or detect_lang(s[key])
             if lang and s[key]:
                 try:
                     s[key] = argos.translate(s[key], lang, "bg")
                 except Exception as e:
                     log.error("ГРЕШКА превод: %s", e)
         if s["title"] != original:
-            s["original"] = original   # показва се под превода, за да се улавят грешките
+            # показва се под превода, за да се улавят грешките
+            s["note"] = "{} · {}".format((s.get("lang") or detect_lang(original) or "").upper(),
+                                         original)
     log.info("Преведени са %d истории", len(stories))
 
 
@@ -346,8 +352,9 @@ def render_story(s, big=False):
     links = " · ".join('<a href="{}">{}</a>'.format(e(url, quote=True), e(name))
                        for name, url in s["links"])
     summary = "<p>{}</p>".format(e(s["summary"])) if s["summary"] else ""
-    original = ('<div style="font-size:.8em;color:#6b645a">{}</div>'.format(e(s["original"]))
-                if s.get("original") else "")
+    original = ('<div style="font-size:.8em;font-style:italic;color:#6b645a;'
+                'border-left:2px solid #cfc6b4;padding-left:.4em">{}</div>'.format(e(s["note"]))
+                if s.get("note") else "")
     return '<article class="{}"><h3>{}</h3>{}{}<div class="src">{}</div></article>'.format(
         "big" if big else "", e(s["title"]), original, summary, links)
 
@@ -391,11 +398,15 @@ def build_docx(stories, weather, today, section_order):
         v.spacing(title, before=3, after=0.5, line=1.0)
         title.paragraph_format.keep_with_next = True
         v.set_font(title.add_run(story["title"]), 10.5 if big else 9.5, bold=True)
-        if story.get("original"):
-            orig = doc.add_paragraph()
-            v.spacing(orig, after=0.5, line=1.0)
-            orig.paragraph_format.keep_with_next = True
-            v.set_font(orig.add_run(story["original"]), 7.5, color=v.MUTED)
+        if story.get("note"):
+            note = doc.add_paragraph()
+            v.spacing(note, after=1, line=1.0)
+            note.paragraph_format.keep_with_next = True
+            note.paragraph_format.left_indent = Cm(0.25)
+            v.add_border(note, "left", size=12, color="CFC6B4", space=4)
+            run = note.add_run(story["note"])
+            v.set_font(run, 7.5, color=v.MUTED)
+            run.italic = True
         if story["summary"]:
             text = doc.add_paragraph()
             v.spacing(text, after=0.5, line=1.0)
