@@ -73,7 +73,7 @@ def clean_text(text, limit=300):
     return text[:limit] + ("…" if len(text) > limit else "")
 
 
-def fetch_source(source, since, limit):
+def fetch_source(source, since, limit, summary_chars=300):
     """Връща списък с новини от един източник. При грешка връща празен списък."""
     try:
         req = urllib.request.Request(source["url"], headers={"User-Agent": USER_AGENT})
@@ -89,7 +89,7 @@ def fetch_source(source, since, limit):
                 continue
             items.append({
                 "title": title,
-                "summary": clean_text(entry.get("summary")),
+                "summary": clean_text(entry.get("summary"), summary_chars),
                 "link": entry.get("link"),
                 "source": source["name"],
                 "section": source.get("section", ""),
@@ -108,7 +108,8 @@ def fetch_all(config):
     since = time.time() - settings["hours_back"] * 3600
     with ThreadPoolExecutor(max_workers=8) as pool:
         results = pool.map(
-            lambda s: fetch_source(s, since, settings["per_source_limit"]),
+            lambda s: fetch_source(s, since, settings["per_source_limit"],
+                                   settings.get("summary_chars", 300)),
             config["sources"])
     return [item for items in results for item in items]
 
@@ -139,10 +140,18 @@ PROMPT = """Ти си главен редактор на кратък сутре
 
 Задачи:
 1. Обедини новините, които разказват една и съща история (от различни източници), в една.
+   Свързани новини за едно и също събитие (например церемония, реакции, спорове около него)
+   също обедини — една тема не може да има повече от 2 истории във вестника.
 2. Избери около $max_stories най-важни истории. Предпочитай значими събития пред дребни.
    Включи поне 2 за Армения и поне 2 за технологии/AI, ако има подходящи.
+   Не слагай повече от 6 истории в една рубрика. Рубриката "Любопитно" е за интересни
+   неполитически новини; ако няма подходящи, не я пълни с измислени.
 3. За всяка история напиши на български:
    - "title": кратко и ясно заглавие (до 12 думи);
+   - "title" и "summary" да не звучат по-силно от източника: не превръщай "нападение" в
+     "покушение", "обвинен" в "виновен", "според X" в установен факт. Спорни твърдения
+     приписвай на източника (напр. "според ОАЕ", "пише НЮТ"). Не добавяй подробности, които
+     ги няма в списъка;
    - "summary": неутрално и фактологично резюме, без измислици. Вестникът трябва да се
      събере на ЕДНА страница: за "top" историите 3 изречения (до 55 думи), за останалите
      2–3 изречения (до 40 думи). Всички резюмета общо — до 600 думи;
@@ -150,6 +159,8 @@ PROMPT = """Ти си главен редактор на кратък сутре
    - "top": true за 3–5-те най-важни истории за деня, иначе false;
    - "ids": номерата на всички използвани новини от списъка.
 4. Напиши "day_in_three": обобщение на деня точно в 3 кратки изречения (общо до 60 думи).
+   Обхвани различни области — България, света и Армения или технологиите, — а не само
+   най-голямата тема. Ако има важна новина за Армения, спомени я.
 
 Отговори САМО с валиден JSON, без обяснения и без ```, в този формат:
 {"day_in_three": "...", "stories": [{"title": "...", "summary": "...", "section": "...", "top": true, "ids": [1, 5]}]}
@@ -198,6 +209,9 @@ def summarize(items, settings):
             data = extract_json(outer["result"])
             if not data.get("stories"):
                 raise ValueError("Няма новини в отговора")
+            for story in data["stories"]:
+                if story.get("section") not in SECTIONS:
+                    story["section"] = "Свят"
             return data
         except Exception as e:
             last_error = e
