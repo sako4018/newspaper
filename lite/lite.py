@@ -14,6 +14,7 @@ import math
 import re
 import sys
 import time
+import urllib.parse
 import urllib.request
 import webbrowser
 from collections import Counter
@@ -29,20 +30,12 @@ OUTPUT = BASE / "output"
 USER_AGENT = "Mozilla/5.0 (Macintosh) VestnikLite/1.0"
 SIMILARITY = 0.28        # над тази стойност две новини се броят за една история
 TOP_COUNT = 4            # колко истории са „Главното днес“
-MAX_PER_SECTION = 5
+CATALOG = BASE / "catalog.yaml"
+PROFILE = BASE / "profile.yaml"   # личният избор на потребителя
 
 WEEKDAYS = ["понеделник", "вторник", "сряда", "четвъртък", "петък", "събота", "неделя"]
 MONTHS = ["януари", "февруари", "март", "април", "май", "юни", "юли",
           "август", "септември", "октомври", "ноември", "декември"]
-# Рубриката от източника е само подсказка: новина от български сайт за чужда тема отива в „Свят“,
-# освен ако в текста има някоя от тези думи.
-SECTION_KEYWORDS = {
-    "България": ["българи", "софи", "радев", "пловдив", "варна", "бургас", "народно събрание",
-                 "bulgaria", "sofia", "цар самуил", "евро", "бнб"],
-    "Армения": ["армени", "armenia", "ереван", "yerevan", "пашинян", "pashinyan", "карабах",
-                "karabakh", "сюник", "syunik", "азербайджан", "azerbaijan", "հայաստան", "հայ",
-                "երևան", "փաշինյան", "ադրբեջան"],
-}
 STOPWORDS = set("""the a an and or of to in on for with at by from is are was were be as it its
 this that after over says said new about into amid и в на за от с по се да е са че не при като
 към или но през след до този тази това които който които има ще е в на и от за по при как""".split())
@@ -78,7 +71,8 @@ def fetch_source(source, since, limit):
                 "summary": clean_text(entry.get("summary")),
                 "link": entry["link"],
                 "source": source["name"],
-                "section": source.get("section", ""),
+                "section": source["topic_name"],
+                "topic": source["topic"],
                 "weight": source.get("weight", 1.0),
                 "ts": ts,
             })
@@ -91,12 +85,11 @@ def fetch_source(source, since, limit):
         return []
 
 
-def fetch_all(config):
-    settings = config["settings"]
+def fetch_all(sources, settings):
     since = time.time() - settings["hours_back"] * 3600
     with ThreadPoolExecutor(max_workers=8) as pool:
-        results = pool.map(lambda s: fetch_source(s, since, settings["per_source_limit"]),
-                           config["sources"])
+        results = pool.map(lambda src: fetch_source(src, since, settings["per_source_limit"]),
+                           sources)
     return [item for items in results for item in items]
 
 
@@ -173,10 +166,7 @@ def make_story(group, prefs, hours_back):
             break
         text = (text + " " + s).strip()
     text = text[:320] + ("…" if len(text) > 320 else "")
-    section = Counter(it["section"] for it in group).most_common(1)[0][0] or "Други"
-    keywords = SECTION_KEYWORDS.get(section)
-    if keywords and not contains_any(lead["title"] + " " + lead["summary"], keywords):
-        section = "Свят"
+    section = Counter(it["section"] for it in group).most_common(1)[0][0]
     links, seen = [], set()
     for it in sorted(group, key=lambda it: -it["weight"]):
         if it["source"] not in seen:
@@ -186,11 +176,25 @@ def make_story(group, prefs, hours_back):
             "score": score(group, prefs, hours_back)}
 
 
-def build_stories(items, config, prefs):
+def keep_relevant(items, topics, selected):
+    """Тема с keywords (България, Армения) задържа новина само ако съдържа някоя от думите.
+    Иначе новината отива в „Свят“, ако потребителят следи тази тема, или се пропуска."""
+    kept = []
+    for it in items:
+        words = topics[it["topic"]].get("keywords")
+        if words and not contains_any(it["title"] + " " + it["summary"], words):
+            if "world" not in selected:
+                continue
+            it = dict(it, topic="world", section=topics["world"]["name"])
+        kept.append(it)
+    return kept
+
+
+def build_stories(items, settings, prefs):
     never = [str(w).lower() for w in prefs.get("никога", [])]
     stories = []
     for group in cluster(items):
-        story = make_story(group, prefs, config["settings"]["hours_back"])
+        story = make_story(group, prefs, settings["hours_back"])
         blob = (story["title"] + " " + story["summary"]).lower()
         if any(w in blob for w in never):
             continue
@@ -199,16 +203,14 @@ def build_stories(items, config, prefs):
     return stories
 
 
-def pick(stories, max_stories):
-    """Най-добрите истории като цяло, но не повече от MAX_PER_SECTION в рубрика."""
-    per_section, chosen = Counter(), []
+def pick(stories, per_topic):
+    """До per_topic най-добри истории от всяка избрана тема. Най-високо оценените
+    като цяло са „Главното днес“."""
+    count, chosen = Counter(), []
     for s in stories:
-        if per_section[s["section"]] >= MAX_PER_SECTION:
-            continue
-        per_section[s["section"]] += 1
-        chosen.append(s)
-        if len(chosen) >= max_stories:
-            break
+        if count[s["section"]] < per_topic:
+            count[s["section"]] += 1
+            chosen.append(s)
     for n, s in enumerate(chosen):
         s["top"] = n < TOP_COUNT
     return chosen
@@ -323,6 +325,77 @@ def render(stories, weather, today, section_order):
                        weather=render_weather(weather), body="\n".join(body))
 
 
+# ---------- Профил: избор на теми при първо пускане ----------
+
+def geocode(name):
+    """Намира града по име (Open-Meteo, безплатно). Връща списък с {name, lat, lon}."""
+    url = "https://geocoding-api.open-meteo.com/v1/search?name={}&count=5&language=bg".format(
+        urllib.parse.quote(name))
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            found = json.loads(resp.read()).get("results", [])
+    except Exception as e:
+        log.error("Не мога да търся града: %s", e)
+        return []
+    return [{"name": r["name"] + (", " + r["country"] if r.get("country") else ""),
+             "lat": r["latitude"], "lon": r["longitude"]} for r in found]
+
+
+def ask_list(question):
+    return [w.strip() for w in input(question).split(",") if w.strip()]
+
+
+def setup(catalog):
+    """Пита потребителя какво да следи и записва profile.yaml."""
+    topics = catalog["topics"]
+    print("\nВестник Lite — какво искаш да следиш?\n")
+    for n, t in enumerate(topics, 1):
+        print("  {:>2}. {} — {}".format(n, t["name"], t["about"]))
+    while True:
+        raw = input("\nНомера на темите през запетая (или „всички“): ").strip().lower()
+        if raw in ("всички", "all"):
+            chosen = list(range(len(topics)))
+        else:
+            try:
+                chosen = [int(x) - 1 for x in raw.replace(" ", "").split(",") if x]
+            except ValueError:
+                chosen = []
+        if chosen and all(0 <= i < len(topics) for i in chosen):
+            break
+        print("Въведи номера от списъка, например: 1,4,5")
+
+    city = None
+    while True:
+        name = input("\nГрад за времето (Enter, ако не искаш): ").strip()
+        if not name:
+            break
+        options = geocode(name)
+        if not options:
+            print("Не намерих такъв град, опитай пак.")
+            continue
+        for n, o in enumerate(options, 1):
+            print("  {}. {}".format(n, o["name"]))
+        pick_n = input("Кой от тях? (номер, Enter за 1): ").strip() or "1"
+        if pick_n.isdigit() and 1 <= int(pick_n) <= len(options):
+            city = options[int(pick_n) - 1]
+            break
+
+    print("\nНезадължително — думи през запетая (Enter за пропускане):")
+    profile = {
+        "topics": [topics[i]["id"] for i in dict.fromkeys(chosen)],
+        "city": city,
+        "stories_per_topic": 4,
+        "повече": ask_list("  Искам повече новини за: "),
+        "по-малко": ask_list("  Искам по-малко за: "),
+        "никога": ask_list("  Никога не показвай: "),
+    }
+    PROFILE.write_text(yaml.safe_dump(profile, allow_unicode=True, sort_keys=False),
+                       encoding="utf-8")
+    print("\nЗаписано в {}. Промяна по-късно: python lite.py --setup\n".format(PROFILE.name))
+    return profile
+
+
 # ---------- main ----------
 
 def main():
@@ -333,22 +406,30 @@ def main():
     if "--auto" in sys.argv and "--force" not in sys.argv and (out.exists() or today.hour < 5):
         return
 
-    config = yaml.safe_load((BASE / "sources.yaml").read_text(encoding="utf-8"))
-    prefs_file = BASE / "preferences.yaml"
-    prefs = yaml.safe_load(prefs_file.read_text(encoding="utf-8")) if prefs_file.exists() else {}
-    prefs = prefs or {}
+    catalog = yaml.safe_load(CATALOG.read_text(encoding="utf-8"))
+    if "--setup" in sys.argv or not PROFILE.exists():
+        if "--auto" in sys.argv:
+            sys.exit("Няма профил. Пусни ръчно „python lite.py --setup“ и избери теми.")
+        profile = setup(catalog)
+    else:
+        profile = yaml.safe_load(PROFILE.read_text(encoding="utf-8"))
 
-    place = config.get("weather")
-    weather = fetch_weather(place) if place else None
-    items = fetch_all(config)
+    settings = catalog["settings"]
+    topics = {t["id"]: t for t in catalog["topics"]}
+    selected = [t for t in profile["topics"] if t in topics]
+    sources = [dict(src, topic=t, topic_name=topics[t]["name"])
+               for t in selected for src in topics[t]["sources"]]
+    if not sources:
+        sys.exit("Няма избрани теми. Пусни „python lite.py --setup“.")
+
+    weather = fetch_weather(profile["city"]) if profile.get("city") else None
+    items = fetch_all(sources, settings)
     if not items:
         sys.exit("Нито един източник не върна новини")
-    stories = pick(build_stories(items, config, prefs), config["settings"]["max_stories"])
+    items = keep_relevant(items, topics, selected)
+    stories = pick(build_stories(items, settings, profile), profile.get("stories_per_topic", 4))
 
-    order = []
-    for s in config["sources"]:
-        if s.get("section") and s["section"] not in order:
-            order.append(s["section"])
+    order = [topics[t]["name"] for t in selected]
     page = render(stories, weather, today, order)
     out.write_text(page, encoding="utf-8")
     (OUTPUT / "latest.html").write_text(page, encoding="utf-8")

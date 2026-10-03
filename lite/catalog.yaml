@@ -1,0 +1,133 @@
+# Каталог с теми за „Вестник Lite“. При първо пускане потребителят избира кои да следи.
+# Нова тема: добави блок с id, name, about и sources. По желание keywords: ако е зададено,
+# новина от източник на темата се задържа в нея само ако съдържа някоя от думите
+# (иначе се води „Свят“ или се пропуска) — за местни теми като България и Армения.
+
+settings:
+  hours_back: 24
+  per_source_limit: 12
+
+topics:
+  - id: bg
+    name: България
+    about: местни новини и политика
+    keywords: [българи, софи, радев, пловдив, варна, бургас, народно събрание, bulgaria, sofia, бнб, евро]
+    sources:
+      - {name: "БТА",         url: "https://www.bta.bg/bg/rss/free"}
+      - {name: "Дневник",     url: "https://www.dnevnik.bg/rss/"}
+      - {name: "Медиапул",    url: "https://www.mediapool.bg/rss/"}
+      - {name: "Капитал",     url: "https://www.capital.bg/rss/"}
+      - {name: "Actualno",    url: "https://www.actualno.com/rss/"}
+      - {name: "Club Z",      url: "https://clubz.bg/rss"}
+      - {name: "Sofia Globe", url: "https://sofiaglobe.com/feed/"}
+
+  - id: armenia
+    name: Армения
+    about: новини от и за Армения, Кавказа
+    keywords: [армени, armenia, ереван, yerevan, пашинян, pashinyan, карабах, karabakh, сюник, syunik, азербайджан, azerbaijan, հայաստան, հայ, երևան, փաշինյան, ադրբեջան]
+    sources:
+      - {name: "News.am",    url: "https://news.am/eng/rss/"}
+      - {name: "News.am RU", url: "https://news.am/rus/rss/"}
+      - {name: "Asbarez",    url: "https://asbarez.com/feed/"}
+      - {name: "Azatutyun",  url: "https://www.azatutyun.am/api/"}
+      - {name: "Aravot",     url: "https://www.aravot.am/rss"}
+      - {name: "Hetq",       url: "https://hetq.am/en/rss"}
+
+  - id: world
+    name: Свят
+    about: международна политика и събития
+    sources:
+      - {name: "BBC World",    url: "https://feeds.bbci.co.uk/news/world/rss.xml"}
+      - {name: "The Guardian", url: "https://www.theguardian.com/world/rss"}
+      - {name: "Al Jazeera",   url: "https://www.aljazeera.com/xml/rss/all.xml"}
+      - {name: "DW",           url: "https://rss.dw.com/rdf/rss-en-all"}
+      - {name: "Euronews",     url: "https://www.euronews.com/rss"}
+      - {name: "NYT World",    url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"}
+      - {name: "France 24",    url: "https://www.france24.com/en/rss"}
+      - {name: "Politico EU",  url: "https://www.politico.eu/feed/"}
+      - {name: "Bloomberg",    url: "https://feeds.bloomberg.com/politics/news.rss"}
+
+  - id: tech
+    name: Технологии и AI
+    about: изкуствен интелект, софтуер, устройства
+    sources:
+      - {name: "Ars Technica",   url: "https://feeds.arstechnica.com/arstechnica/index"}
+      - {name: "The Verge",      url: "https://www.theverge.com/rss/index.xml"}
+      - {name: "TechCrunch",     url: "https://techcrunch.com/feed/"}
+      - {name: "Wired",          url: "https://www.wired.com/feed/rss"}
+      - {name: "Techmeme",       url: "https://www.techmeme.com/feed.xml"}
+      - {name: "Kaldata",        url: "https://www.kaldata.com/feed/"}
+      - {name: "Tom's Hardware", url: "https://www.tomshardware.com/feeds/all"}
+
+  - id: economy
+    name: Икономика и бизнес
+    about: пазари, компании, финанси
+    sources:
+      - {name: "MarketWatch",     url: "https://feeds.content.dowjones.io/public/rss/mw_topstories"}
+      - {name: "BBC Business",    url: "https://feeds.bbci.co.uk/news/business/rss.xml"}
+      - {name: "Guardian Business", url: "https://www.theguardian.com/uk/business/rss"}
+      - {name: "Investing.com",   url: "https://www.investing.com/rss/news.rss"}
+      - {name: "CNBC",            url: "https://www.cnbc.com/id/10001147/device/rss/rss.html"}
+
+  - id: science
+    name: Наука и космос
+    about: открития, космос, изследвания
+    sources:
+      - {name: "Phys.org",     url: "https://phys.org/rss-feed/"}
+      - {name: "ScienceDaily", url: "https://www.sciencedaily.com/rss/all.xml"}
+      - {name: "BBC Science",  url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"}
+      - {name: "NASA",         url: "https://www.nasa.gov/rss/dyn/breaking_news.rss"}
+
+  - id: sport
+    name: Спорт
+    about: футбол, тенис и други
+    sources:
+      - {name: "BBC Sport",     url: "https://feeds.bbci.co.uk/sport/rss.xml"}
+      - {name: "ESPN",          url: "https://www.espn.com/espn/rss/news"}
+      - {name: "Sky Sports",    url: "https://www.skysports.com/rss/12040"}
+      - {name: "Guardian Sport", url: "https://www.theguardian.com/sport/rss"}
+      - {name: "Gong.bg",       url: "https://gong.bg/rss"}
+
+  - id: culture
+    name: Култура и кино
+    about: кино, музика, изкуство
+    sources:
+      - {name: "Guardian Culture", url: "https://www.theguardian.com/culture/rss"}
+      - {name: "BBC Arts",         url: "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"}
+      - {name: "Variety",          url: "https://variety.com/feed/"}
+
+  - id: health
+    name: Здраве
+    about: медицина и здравеопазване
+    sources:
+      - {name: "BBC Health",      url: "https://feeds.bbci.co.uk/news/health/rss.xml"}
+      - {name: "Guardian Health", url: "https://www.theguardian.com/society/health/rss"}
+      - {name: "NPR Health",      url: "https://feeds.npr.org/1128/rss.xml"}
+
+  - id: games
+    name: Игри
+    about: видеоигри и гейминг
+    sources:
+      - {name: "IGN",       url: "https://feeds.ign.com/ign/all"}
+      - {name: "Polygon",   url: "https://www.polygon.com/rss/index.xml"}
+      - {name: "PC Gamer",  url: "https://www.pcgamer.com/rss/"}
+      - {name: "Eurogamer", url: "https://www.eurogamer.net/feed"}
+
+  - id: env
+    name: Околна среда
+    about: климат и природа
+    sources:
+      - {name: "Guardian Environment", url: "https://www.theguardian.com/environment/rss"}
+      - {name: "BBC Science & Env",    url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"}
+
+  - id: crypto
+    name: Крипто
+    about: криптовалути и блокчейн
+    sources:
+      - {name: "Cointelegraph", url: "https://cointelegraph.com/rss"}
+
+  - id: cars
+    name: Автомобили
+    about: нови коли и индустрия
+    sources:
+      - {name: "Motor1", url: "https://www.motor1.com/rss/articles/all/"}
