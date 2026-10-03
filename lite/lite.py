@@ -218,6 +218,50 @@ def pick(stories, per_topic):
     return chosen
 
 
+# ---------- 3б. Превод на български (офлайн, с Argos Translate) ----------
+
+TRANSLATION_MODELS = [("en", "bg"), ("ru", "en")]   # руският минава през английски
+
+
+def detect_lang(text):
+    """„en“ за латиница, „ru“ за руски, иначе None (български, арменски и т.н. не се превеждат)."""
+    letters = [c for c in text if c.isalpha()]
+    if not letters:
+        return None
+    if sum("a" <= c.lower() <= "z" for c in letters) / len(letters) > 0.8:
+        return "en"
+    if re.search("[ыэё]", text.lower()):
+        return "ru"
+    return None
+
+
+def translate_stories(stories):
+    """Превежда на български заглавията и резюметата на чуждоезичните истории."""
+    try:
+        import argostranslate.package as argos_package
+        import argostranslate.translate as argos
+    except ImportError:
+        log.warning("Няма argostranslate — новините остават на езика на източника")
+        return
+    installed = {(p.from_code, p.to_code) for p in argos_package.get_installed_packages()}
+    missing = [pair for pair in TRANSLATION_MODELS if pair not in installed]
+    if missing:
+        log.info("Теглене на модели за превод (само първия път): %s", missing)
+        argos_package.update_package_index()
+        for pkg in argos_package.get_available_packages():
+            if (pkg.from_code, pkg.to_code) in missing:
+                argos_package.install_from_path(pkg.download())
+    for s in stories:
+        for key in ("title", "summary"):
+            lang = detect_lang(s[key])
+            if lang and s[key]:
+                try:
+                    s[key] = argos.translate(s[key], lang, "bg")
+                except Exception as e:
+                    log.error("ГРЕШКА превод: %s", e)
+    log.info("Преведени са %d истории", len(stories))
+
+
 # ---------- 4. Времето ----------
 
 WEATHER_CODES = [
@@ -500,6 +544,7 @@ def main():
     items = keep_relevant(items, topics, selected)
     stories = pick(build_stories(items, settings, profile), profile.get("stories_per_topic", 4))
 
+    translate_stories(stories)
     order = [topics[t]["name"] for t in selected]
     latest = OUTPUT / "latest.{}".format(ext)
     if ext == "html":

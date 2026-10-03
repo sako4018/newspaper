@@ -1,3 +1,4 @@
 feedparser
 pyyaml
 python-docx
+argostranslate==1.9.6   # по-новите версии искат Python 3.10+
