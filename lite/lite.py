@@ -252,6 +252,7 @@ def translate_stories(stories):
             if (pkg.from_code, pkg.to_code) in missing:
                 argos_package.install_from_path(pkg.download())
     for s in stories:
+        original = s["title"]
         for key in ("title", "summary"):
             lang = detect_lang(s[key])
             if lang and s[key]:
@@ -259,6 +260,8 @@ def translate_stories(stories):
                     s[key] = argos.translate(s[key], lang, "bg")
                 except Exception as e:
                     log.error("ГРЕШКА превод: %s", e)
+        if s["title"] != original:
+            s["original"] = original   # показва се под превода, за да се улавят грешките
     log.info("Преведени са %d истории", len(stories))
 
 
@@ -343,8 +346,10 @@ def render_story(s, big=False):
     links = " · ".join('<a href="{}">{}</a>'.format(e(url, quote=True), e(name))
                        for name, url in s["links"])
     summary = "<p>{}</p>".format(e(s["summary"])) if s["summary"] else ""
-    return '<article class="{}"><h3>{}</h3>{}<div class="src">{}</div></article>'.format(
-        "big" if big else "", e(s["title"]), summary, links)
+    original = ('<div style="font-size:.8em;color:#6b645a">{}</div>'.format(e(s["original"]))
+                if s.get("original") else "")
+    return '<article class="{}"><h3>{}</h3>{}{}<div class="src">{}</div></article>'.format(
+        "big" if big else "", e(s["title"]), original, summary, links)
 
 
 def render_weather(w):
@@ -381,15 +386,27 @@ def build_docx(stories, weather, today, section_order):
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.shared import Cm, Pt
 
-    # v.add_story търси линковете по номер в списък с новини
-    items = []
-
-    def with_ids(s):
-        ids = []
-        for name, url in s["links"]:
-            ids.append(len(items))
-            items.append({"source": name, "link": url})
-        return dict(s, ids=ids)
+    def add_story(story, big=False):
+        title = doc.add_paragraph()
+        v.spacing(title, before=3, after=0.5, line=1.0)
+        title.paragraph_format.keep_with_next = True
+        v.set_font(title.add_run(story["title"]), 10.5 if big else 9.5, bold=True)
+        if story.get("original"):
+            orig = doc.add_paragraph()
+            v.spacing(orig, after=0.5, line=1.0)
+            orig.paragraph_format.keep_with_next = True
+            v.set_font(orig.add_run(story["original"]), 7.5, color=v.MUTED)
+        if story["summary"]:
+            text = doc.add_paragraph()
+            v.spacing(text, after=0.5, line=1.0)
+            text.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            v.set_font(text.add_run(story["summary"]), 8.5)
+        links = doc.add_paragraph()
+        v.spacing(links, after=1, line=1.0)
+        for n, (name, url) in enumerate(story["links"]):
+            if n:
+                v.set_font(links.add_run(" · "), 7.5, color=v.MUTED)
+            v.add_hyperlink(links, url, name)
 
     doc = Document()
     section = doc.sections[0]
@@ -429,13 +446,13 @@ def build_docx(stories, weather, today, section_order):
     if top:
         v.add_heading(doc, "Главното днес", v.ACCENT)
         for s in top:
-            v.add_story(doc, with_ids(s), items, big=True)
+            add_story(s, big=True)
     for sec_name in section_order + sorted({s["section"] for s in stories} - set(section_order)):
         group = [s for s in stories if not s["top"] and s["section"] == sec_name]
         if group:
             v.add_heading(doc, sec_name)
             for s in group:
-                v.add_story(doc, with_ids(s), items)
+                add_story(s)
     return doc
 
 
