@@ -145,7 +145,7 @@ PROMPT = """Ти си главен редактор на кратък сутре
 2. Избери около $max_stories най-важни и най-интересни истории. Предпочитай значими събития пред
    дребни, а теми, отразени от няколко източника, пред такива от един.
    Включи поне 2 за Армения и поне 2 за технологии/AI, ако има подходящи.
-   Не слагай повече от 6 истории в една рубрика. Рубриката "Любопитно" е за интересни
+   Включи поне 3 за България, ако има. Не слагай повече от 6 истории в една рубрика. Рубриката "Любопитно" е за интересни
    неполитически новини; ако няма подходящи, не я пълни с измислени.
 3. За всяка история напиши на български:
    - "title": кратко и ясно заглавие (до 12 думи);
@@ -157,14 +157,16 @@ PROMPT = """Ти си главен редактор на кратък сутре
      събере на ЕДНА страница: за "top" историите 3 изречения (до 55 думи), за останалите
      2–3 изречения (до 40 думи). Всички резюмета общо — до 600 думи;
    - "section": една от рубриките: $sections;
-   - "top": true за 3–5-те най-важни истории за деня, иначе false;
+   - "score": оценка от 1 до 10 колко е важна и интересна историята за читателя (10 = най-голямата
+     новина на деня; сравнявай между рубриките, не давай всичко на 7–8);
+   - "top": true за 3–5-те истории с най-висока оценка, иначе false;
    - "ids": номерата на всички използвани новини от списъка.
 4. Напиши "day_in_three": обобщение на деня точно в 3 кратки изречения (общо до 60 думи).
    Обхвани различни области — България, света и Армения или технологиите, — а не само
    най-голямата тема. Ако има важна новина за Армения, спомени я.
 
 Отговори САМО с валиден JSON, без обяснения и без ```, в този формат:
-{"day_in_three": "...", "stories": [{"title": "...", "summary": "...", "section": "...", "top": true, "ids": [1, 5]}]}
+{"day_in_three": "...", "stories": [{"title": "...", "summary": "...", "section": "...", "score": 8, "top": true, "ids": [1, 5]}]}
 
 НОВИНИ:
 $news
@@ -374,6 +376,26 @@ def story_links(story, items):
     return links
 
 
+TOP_COUNT = 4
+
+
+def rank_stories(stories, items):
+    """Подрежда историите по интерес: оценката на Claude + бонус, ако я отразяват няколко
+    източника. Най-интересните 4 стават „Главното днес“, най-горе е най-интересната.
+    Стари броеве без оценка запазват реда и „top“ от Claude."""
+    if not any(isinstance(s.get("score"), (int, float)) for s in stories):
+        return stories
+
+    def rank(story):
+        score = story["score"] if isinstance(story.get("score"), (int, float)) else 5
+        return score + 0.5 * min(max(len(story_links(story, items)) - 1, 0), 3)
+
+    ranked = sorted(stories, key=rank, reverse=True)
+    for n, story in enumerate(ranked):
+        story["top"] = n < TOP_COUNT
+    return ranked
+
+
 def add_heading(doc, text, color=INK):
     p = doc.add_paragraph()
     spacing(p, before=4, after=1.5)
@@ -474,7 +496,7 @@ def build_docx(data, items, today, weather=None):
     breaker = doc.paragraphs[-1]
     spacing(breaker, after=3, line=Pt(1))
 
-    stories = data["stories"]
+    stories = rank_stories(data["stories"], items)
     top = [s for s in stories if s.get("top")]
     if top:
         add_heading(doc, "Главното днес", ACCENT)
