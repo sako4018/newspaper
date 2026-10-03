@@ -198,7 +198,8 @@ def summarize(items, settings):
            "--model", settings.get("claude_model", "sonnet"),
            "--tools", "", "--no-session-persistence"]
     last_error = None
-    for attempt in (1, 2):
+    pauses = {1: 60, 2: 300}   # колко секунди се чака след неуспешен опит
+    for attempt in (1, 2, 3):
         try:
             log.info("Claude обобщава %d новини (опит %d)...", len(items), attempt)
             proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
@@ -224,6 +225,9 @@ def summarize(items, settings):
         except Exception as e:
             last_error = e
             log.warning("Опит %d неуспешен: %s", attempt, e)
+            if attempt in pauses:
+                log.info("Изчакване %d сек. преди следващия опит...", pauses[attempt])
+                time.sleep(pauses[attempt])
     raise RuntimeError("Claude не успя да обобщи новините: {}".format(last_error))
 
 
