@@ -12,6 +12,8 @@ import json
 import logging
 import math
 import re
+import shutil
+import subprocess
 import sys
 import time
 import urllib.parse
@@ -325,6 +327,74 @@ def render(stories, weather, today, section_order):
                        weather=render_weather(weather), body="\n".join(body))
 
 
+# ---------- Word документ (оформлението е от claude/vestnik.py) ----------
+
+def build_docx(stories, weather, today, section_order):
+    sys.path.insert(0, str(BASE.parent / "claude"))
+    import vestnik as v
+    from docx import Document
+    from docx.enum.section import WD_SECTION
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.shared import Cm, Pt
+
+    # v.add_story търси линковете по номер в списък с новини
+    items = []
+
+    def with_ids(s):
+        ids = []
+        for name, url in s["links"]:
+            ids.append(len(items))
+            items.append({"source": name, "link": url})
+        return dict(s, ids=ids)
+
+    doc = Document()
+    section = doc.sections[0]
+    section.page_width, section.page_height = Cm(21), Cm(29.7)
+    section.left_margin = section.right_margin = Cm(1.0)
+    section.top_margin = section.bottom_margin = Cm(0.9)
+
+    kicker = doc.add_paragraph()
+    v.spacing(kicker, after=2)
+    v.add_border(kicker, "bottom", size=4, color="CFC6B4")
+    kicker.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    v.set_font(kicker.add_run("{}  ·  {} истории  ·  съставен в {}".format(
+        bg_date(today), len(stories), datetime.now().strftime("%H:%M"))), 7.5, color=v.MUTED)
+
+    name = doc.add_paragraph()
+    v.spacing(name, after=2)
+    name.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    v.add_border(name, "bottom", size=12, style="double", space=2)
+    v.set_font(name.add_run("Сутрешен вестник Lite"), 26, bold=True)
+
+    if weather:
+        line = doc.add_paragraph()
+        v.spacing(line, before=3, after=3)
+        line.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        v.set_font(line.add_run("ВРЕМЕТО ДНЕС · {}   ".format(weather["city"].upper())),
+                   7.5, bold=True, color=v.ACCENT)
+        v.set_font(line.add_run("{}° / {}° · {} · дъжд {}% · вятър до {} км/ч · {}".format(
+            weather["max"], weather["min"], weather["text"], weather["rain"],
+            weather["wind"], v.weather_tip(weather))), 8.5)
+
+    body = doc.add_section(WD_SECTION.CONTINUOUS)
+    v.set_columns(body, 2)
+    breaker = doc.paragraphs[-1]
+    v.spacing(breaker, after=3, line=Pt(1))
+
+    top = [s for s in stories if s["top"]]
+    if top:
+        v.add_heading(doc, "Главното днес", v.ACCENT)
+        for s in top:
+            v.add_story(doc, with_ids(s), items, big=True)
+    for sec_name in section_order + sorted({s["section"] for s in stories} - set(section_order)):
+        group = [s for s in stories if not s["top"] and s["section"] == sec_name]
+        if group:
+            v.add_heading(doc, sec_name)
+            for s in group:
+                v.add_story(doc, with_ids(s), items)
+    return doc
+
+
 # ---------- Профил: избор на теми при първо пускане ----------
 
 def geocode(name):
@@ -402,7 +472,8 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     today = datetime.now()
     OUTPUT.mkdir(exist_ok=True)
-    out = OUTPUT / "{}.html".format(today.strftime("%Y-%m-%d"))
+    ext = "html" if "--html" in sys.argv else "docx"
+    out = OUTPUT / "{}.{}".format(today.strftime("%Y-%m-%d"), ext)
     if "--auto" in sys.argv and "--force" not in sys.argv and (out.exists() or today.hour < 5):
         return
 
@@ -430,12 +501,20 @@ def main():
     stories = pick(build_stories(items, settings, profile), profile.get("stories_per_topic", 4))
 
     order = [topics[t]["name"] for t in selected]
-    page = render(stories, weather, today, order)
-    out.write_text(page, encoding="utf-8")
-    (OUTPUT / "latest.html").write_text(page, encoding="utf-8")
+    latest = OUTPUT / "latest.{}".format(ext)
+    if ext == "html":
+        page = render(stories, weather, today, order)
+        out.write_text(page, encoding="utf-8")
+        latest.write_text(page, encoding="utf-8")
+    else:
+        build_docx(stories, weather, today, order).save(out)
+        shutil.copyfile(out, latest)
     log.info("Готово: %s (%d истории от %d новини)", out, len(stories), len(items))
     if "--open" in sys.argv:
-        webbrowser.open(out.as_uri())
+        if ext == "html":
+            webbrowser.open(out.as_uri())
+        else:
+            subprocess.run(["open", str(out)])
 
 
 if __name__ == "__main__":
