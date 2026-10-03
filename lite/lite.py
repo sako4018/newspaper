@@ -582,6 +582,8 @@ def main():
     else:
         build_docx(stories, weather, today, order).save(out)
         shutil.copyfile(out, latest)
+        if "--auto" in sys.argv:   # копие на Desktop, до това на Claude версията
+            shutil.copyfile(out, Path.home() / "Desktop" / "Сутрешен вестник Lite.docx")
     log.info("Готово: %s (%d истории от %d новини)", out, len(stories), len(items))
     if "--open" in sys.argv:
         if ext == "html":
