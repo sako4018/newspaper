@@ -204,8 +204,13 @@ def summarize(items, settings):
             proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
                                   timeout=900, cwd=tempfile.gettempdir())
             if proc.returncode != 0:
-                raise RuntimeError("claude върна код {}: {}".format(
-                    proc.returncode, (proc.stderr or proc.stdout)[:500]))
+                # В stdout е JSON, чиято статистика е в началото. Грешката е в "result".
+                try:
+                    reason = json.loads(proc.stdout).get("result")
+                except ValueError:
+                    reason = None
+                raise RuntimeError("claude върна код {}: {} {}".format(
+                    proc.returncode, reason or "", (proc.stderr or "")[:500]).strip())
             outer = json.loads(proc.stdout)
             if outer.get("is_error"):
                 raise RuntimeError("claude грешка: {}".format(outer.get("result")))
