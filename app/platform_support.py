@@ -1,6 +1,6 @@
 """Единствената точка, през която програмите ползват функции, зависещи от системата.
 
-Сега има реализация само за macOS (platform_mac.py). На друга система функциите не правят
+Има реализации за macOS (platform_mac.py) и Windows (platform_windows.py). На друга система функциите не правят
 нищо и връщат False, така че вестникът пак се прави, но без отваряне, известия и копие на Desktop.
 """
 
@@ -10,6 +10,8 @@ from pathlib import Path
 
 if sys.platform == "darwin":
     import platform_mac as _impl
+elif sys.platform == "win32":
+    import platform_windows as _impl
 else:
     _impl = None
 

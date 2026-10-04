@@ -1,6 +1,6 @@
 """Всичко, което е специфично за macOS: отваряне на файл, известия, папката Desktop.
 
-За Linux се добавя подобен файл (xdg-open, notify-send, XDG_DESKTOP_DIR) и се включва
+За Windows е platform_windows.py. За Linux се добавя подобен файл (xdg-open, notify-send, XDG_DESKTOP_DIR) и
 в platform_support.py.
 """
 
