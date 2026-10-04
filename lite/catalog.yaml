@@ -2,6 +2,8 @@
 # Нова тема: добави блок с id, name, about и sources. По желание keywords: ако е зададено,
 # новина от източник на темата се задържа в нея само ако съдържа някоя от думите
 # (иначе се води „Свят“ или се пропуска) — за местни теми като България и Армения.
+# По желание hours_back на тема: колко часа назад да се гледа (иначе важи settings.hours_back).
+# По-голям прозорец е за теми, чиито източници публикуват рядко.
 
 settings:
   hours_back: 24
@@ -24,6 +26,7 @@ topics:
   - id: armenia
     name: Армения
     about: новини от и за Армения, Кавказа
+    hours_back: 72
     keywords: [армени, armenia, ереван, yerevan, пашинян, pashinyan, карабах, karabakh, сюник, syunik, азербайджан, azerbaijan, հայաստան, հայ, երևան, փաշինյան, ադրբեջան]
     sources:
       - {name: "News.am",    url: "https://news.am/eng/rss/"}
@@ -45,6 +48,38 @@ topics:
       - {name: "Politico EU",  url: "https://www.politico.eu/feed/"}
       - {name: "Bloomberg",    url: "https://feeds.bloomberg.com/politics/news.rss"}
 
+  - id: europe
+    name: Европа и ЕС
+    about: Брюксел, евро, европейска политика
+    sources:
+      - {name: "Guardian Europe",  url: "https://www.theguardian.com/world/europe-news/rss"}
+      - {name: "Politico EU",      url: "https://www.politico.eu/feed/"}
+      - {name: "France 24 Europe", url: "https://www.france24.com/en/europe/rss"}
+      - {name: "BBC Europe",       url: "https://feeds.bbci.co.uk/news/world/europe/rss.xml"}
+
+  - id: ukraine
+    name: Украйна и войната
+    about: събития и дипломация около войната (източниците са украински и западни)
+    sources:
+      - {name: "Ukrinform",           url: "https://www.ukrinform.net/rss/block-lastnews"}
+      - {name: "Kyiv Post",           url: "https://www.kyivpost.com/feed"}
+      - {name: "Ukrainska Pravda EN", url: "https://www.pravda.com.ua/eng/rss/"}
+      - {name: "Kyiv Independent",    url: "https://kyivindependent.com/news-archive/rss/"}
+      - {name: "Guardian Ukraine",    url: "https://www.theguardian.com/world/ukraine/rss"}
+
+  - id: mideast
+    name: Близък изток
+    about: Израел, Газа, Иран, Сирия, Персийския залив
+    keywords: [israel, gaza, hamas, hezbollah, iran, tehran, lebanon, beirut, syria, damascus, iraq, baghdad, yemen, houthi, saudi, "west bank", palestin, netanyahu, hormuz, "persian gulf", "gulf states", qatar, emirates, uae, dubai, "abu dhabi", egypt, arab, "middle east"]
+    sources:
+      - {name: "Arab News",            url: "https://www.arabnews.com/rss.xml"}
+      - {name: "The National",         url: "https://www.thenationalnews.com/arc/outboundfeeds/rss/?outputType=xml"}
+      - {name: "Middle East Eye",      url: "https://www.middleeasteye.net/rss"}
+      - {name: "Haaretz",              url: "https://www.haaretz.com/srv/haaretz-latest-headlines"}
+      - {name: "Al-Monitor",           url: "https://www.al-monitor.com/rss"}
+      - {name: "Guardian Middle East", url: "https://www.theguardian.com/world/middleeast/rss"}
+      - {name: "BBC Middle East",      url: "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml"}
+
   - id: tech
     name: Технологии и AI
     about: изкуствен интелект, софтуер, устройства
@@ -56,6 +91,16 @@ topics:
       - {name: "Techmeme",       url: "https://www.techmeme.com/feed.xml"}
       - {name: "Kaldata",        url: "https://www.kaldata.com/feed/"}
       - {name: "Tom's Hardware", url: "https://www.tomshardware.com/feeds/all"}
+
+  - id: ai
+    name: Изкуствен интелект
+    about: модели, компании, регулации
+    sources:
+      - {name: "The Decoder",     url: "https://the-decoder.com/feed/"}
+      - {name: "TechCrunch AI",   url: "https://techcrunch.com/category/artificial-intelligence/feed/"}
+      - {name: "The Verge AI",    url: "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml"}
+      - {name: "Wired AI",        url: "https://www.wired.com/feed/tag/ai/latest/rss"}
+      - {name: "Ars Technica AI", url: "https://arstechnica.com/ai/feed/"}
 
   - id: economy
     name: Икономика и бизнес
@@ -114,6 +159,7 @@ topics:
   - id: env
     name: Околна среда
     about: климат и природа
+    hours_back: 72
     sources:
       - {name: "Guardian Environment", url: "https://www.theguardian.com/environment/rss"}
       - {name: "BBC Science & Env",    url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"}
@@ -129,3 +175,15 @@ topics:
     about: нови коли и индустрия
     sources:
       - {name: "Motor1", url: "https://www.motor1.com/rss/articles/all/"}
+
+  - id: curious
+    name: Любопитно
+    about: необичайни и интересни истории
+    hours_back: 72
+    sources:
+      - {name: "Mental Floss",      url: "https://www.mentalfloss.com/feed"}
+      - {name: "Good News Network", url: "https://www.goodnewsnetwork.org/feed/"}
+      - {name: "Live Science",      url: "https://www.livescience.com/feeds/all"}
+      - {name: "Atlas Obscura",     url: "https://www.atlasobscura.com/feeds/latest"}
+      - {name: "Smithsonian",       url: "https://www.smithsonianmag.com/rss/latest_articles/"}
+      - {name: "UPI Odd News",      url: "https://rss.upi.com/news/odd_news.rss"}

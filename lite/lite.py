@@ -76,6 +76,7 @@ def fetch_source(source, since, limit):
                 "section": source["topic_name"],
                 "topic": source["topic"],
                 "weight": source.get("weight", 1.0),
+                "hours_back": source["hours_back"],
                 "lang": source.get("lang"),
                 "ts": ts,
             })
@@ -89,10 +90,11 @@ def fetch_source(source, since, limit):
 
 
 def fetch_all(sources, settings):
-    since = time.time() - settings["hours_back"] * 3600
+    now = time.time()
     with ThreadPoolExecutor(max_workers=8) as pool:
-        results = pool.map(lambda src: fetch_source(src, since, settings["per_source_limit"]),
-                           sources)
+        # всеки източник има свой прозорец (hours_back на темата му)
+        results = pool.map(lambda src: fetch_source(
+            src, now - src["hours_back"] * 3600, settings["per_source_limit"]), sources)
     return [item for items in results for item in items]
 
 
@@ -150,6 +152,7 @@ def contains_any(text, words):
 def score(group, prefs, hours_back):
     text = " ".join(it["title"] + " " + it["summary"] for it in group)
     newest = max(it["ts"] for it in group)
+    hours_back = max(it["hours_back"] for it in group)   # прозорецът на темата на новината
     fresh = max(0.0, 1 - (time.time() - newest) / 3600 / hours_back)
     sources = len({it["source"] for it in group})
     weight = max(it["weight"] for it in group)
@@ -560,7 +563,8 @@ def main():
     settings = catalog["settings"]
     topics = {t["id"]: t for t in catalog["topics"]}
     selected = [t for t in profile["topics"] if t in topics]
-    sources = [dict(src, topic=t, topic_name=topics[t]["name"])
+    sources = [dict(src, topic=t, topic_name=topics[t]["name"],
+                    hours_back=topics[t].get("hours_back", settings["hours_back"]))
                for t in selected for src in topics[t]["sources"]]
     if not sources:
         sys.exit("Няма избрани теми. Пусни „python lite.py --setup“.")
