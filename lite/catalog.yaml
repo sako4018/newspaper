@@ -29,8 +29,6 @@ topics:
       - {name: "News.am",    url: "https://news.am/eng/rss/"}
       - {name: "News.am RU", url: "https://news.am/rus/rss/", lang: ru}
       - {name: "Asbarez",    url: "https://asbarez.com/feed/"}
-      - {name: "Azatutyun",  url: "https://www.azatutyun.am/api/", lang: hy}
-      - {name: "Aravot",     url: "https://www.aravot.am/rss", lang: hy}
       - {name: "Hetq",       url: "https://hetq.am/en/rss"}
 
   - id: world
