@@ -565,7 +565,7 @@ def main():
     selected = [t for t in profile["topics"] if t in topics]
     sources = [dict(src, topic=t, topic_name=topics[t]["name"],
                     hours_back=topics[t].get("hours_back", settings["hours_back"]))
-               for t in selected for src in topics[t]["sources"]]
+               for t in selected for src in topics[t]["sources"] if src.get("only") != "claude"]
     if not sources:
         sys.exit("Няма избрани теми. Пусни „python lite.py --setup“.")
 

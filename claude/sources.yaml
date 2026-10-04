@@ -1,47 +1,9 @@
-# RSS източници за „Сутрешен вестник“.
-# За да добавиш източник: копирай един ред и смени name и url.
-# За да махнеш източник: изтрий реда или сложи # пред него.
-# section е подсказка за Claude в коя рубрика е най-вероятно новината.
+# Настройки на Claude версията. Източниците и темите вече са общи с „lite“:
+# вземат се от lite/catalog.yaml, а изборът на теми, градът и думите — от lite/profile.yaml.
+# (За нов източник: добави го в lite/catalog.yaml; с only: claude е само за Claude версията.)
 
-sources:
-  # --- България ---
-  - {name: "БТА",       url: "https://www.bta.bg/bg/rss/free",  section: "България"}
-  - {name: "Дневник",   url: "https://www.dnevnik.bg/rss/",     section: "България"}
-  - {name: "Медиапул",  url: "https://www.mediapool.bg/feed/",   section: "България"}
-  - {name: "Капитал",  url: "https://www.capital.bg/rss/",     section: "България"}
-  - {name: "Actualno",  url: "https://www.actualno.com/rss/",   section: "България"}
-  - {name: "Club Z",    url: "https://clubz.bg/rss",            section: "България"}
-  - {name: "Sofia Globe", url: "https://sofiaglobe.com/feed/",  section: "България"}
-
-  # --- Свят ---
-  - {name: "BBC World",    url: "https://feeds.bbci.co.uk/news/world/rss.xml", section: "Свят"}
-  - {name: "The Guardian", url: "https://www.theguardian.com/world/rss",       section: "Свят"}
-  - {name: "Al Jazeera",   url: "https://www.aljazeera.com/xml/rss/all.xml",   section: "Свят"}
-  - {name: "DW",           url: "https://rss.dw.com/rdf/rss-en-all",           section: "Свят"}
-  - {name: "Euronews",     url: "https://www.euronews.com/rss",                section: "Свят"}
-  - {name: "NYT World",    url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml", section: "Свят"}
-  - {name: "France 24",    url: "https://www.france24.com/en/rss",             section: "Свят"}
-  - {name: "Politico EU",  url: "https://www.politico.eu/feed/",               section: "Свят"}
-  - {name: "Bloomberg",    url: "https://feeds.bloomberg.com/politics/news.rss", section: "Свят"}
-
-  # --- Армения ---
-  - {name: "News.am",   url: "https://news.am/eng/rss/",        section: "Армения"}
-  - {name: "Asbarez",   url: "https://asbarez.com/feed/",       section: "Армения"}
-  - {name: "Azatutyun", url: "https://www.azatutyun.am/api/",   section: "Армения"}
-  - {name: "Aravot",    url: "https://www.aravot.am/rss",       section: "Армения"}
-  - {name: "News.am RU", url: "https://news.am/rus/rss/",      section: "Армения"}
-  - {name: "Hetq",      url: "https://hetq.am/en/rss",          section: "Армения"}
-
-  # --- Технологии и AI ---
-  - {name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index", section: "Технологии и AI"}
-  - {name: "The Verge",    url: "https://www.theverge.com/rss/index.xml",        section: "Технологии и AI"}
-  - {name: "TechCrunch",   url: "https://techcrunch.com/feed/",                  section: "Технологии и AI"}
-  - {name: "Wired",        url: "https://www.wired.com/feed/rss",                section: "Технологии и AI"}
-  - {name: "Techmeme",     url: "https://www.techmeme.com/feed.xml",             section: "Технологии и AI"}
-  - {name: "Kaldata",      url: "https://www.kaldata.com/feed/",                 section: "Технологии и AI"}
-  - {name: "Tom's Hardware", url: "https://www.tomshardware.com/feeds/all",      section: "Технологии и AI"}
-
-# Времето: град и координати (намираш ги в Google Maps с десен клик върху мястото).
+# Времето: град и координати (ползва се, само ако профилът няма град).
+# Координатите се намират с десен клик в Google Maps върху мястото.
 # Пример за Ереван: {name: "Ереван", lat: 40.18, lon: 44.51}
 weather: {name: "Пловдив", lat: 42.14, lon: 24.75}
 
@@ -50,6 +12,7 @@ settings:
   max_stories: 17         # колко новини да има във вестника
   hours_back: 24           # колко часа назад да гледаме
   per_source_limit: 12     # максимум новини от един източник
+  max_per_topic: 25        # най-много новини от една тема, които вижда Claude
   summary_chars: 400       # колко символа от всяка новина вижда Claude
   interests: "важна политика, България, Армения, технологии и изкуствен интелект (AI)"
   claude_model: "sonnet"

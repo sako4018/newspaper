@@ -4,6 +4,7 @@
 # (иначе се води „Свят“ или се пропуска) — за местни теми като България и Армения.
 # По желание hours_back на тема: колко часа назад да се гледа (иначе важи settings.hours_back).
 # По-голям прозорец е за теми, чиито източници публикуват рядко.
+# По желание only: claude на източник — само Claude версията го ползва („lite“ го прескача).
 
 settings:
   hours_back: 24
@@ -21,7 +22,6 @@ topics:
       - {name: "Капитал",     url: "https://www.capital.bg/rss/"}
       - {name: "Actualno",    url: "https://www.actualno.com/rss/"}
       - {name: "Club Z",      url: "https://clubz.bg/rss"}
-      - {name: "Sofia Globe", url: "https://sofiaglobe.com/feed/"}
 
   - id: armenia
     name: Армения
@@ -33,6 +33,8 @@ topics:
       - {name: "News.am RU", url: "https://news.am/rus/rss/", lang: ru}
       - {name: "Asbarez",    url: "https://asbarez.com/feed/"}
       - {name: "Hetq",       url: "https://hetq.am/en/rss"}
+      - {name: "Azatutyun",  url: "https://www.azatutyun.am/api/", only: claude}   # арменски: Claude го чете, lite няма модел
+      - {name: "Aravot",     url: "https://www.aravot.am/rss", only: claude}
 
   - id: world
     name: Свят

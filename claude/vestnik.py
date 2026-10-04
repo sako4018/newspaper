@@ -60,9 +60,52 @@ def setup_logging():
     log.setLevel(logging.INFO)
 
 
+# Каталогът с теми и профилът са общи с „lite“: едни и същи теми, източници и избор.
+CATALOG = BASE.parent / "lite" / "catalog.yaml"
+PROFILE = BASE.parent / "lite" / "profile.yaml"
+
+# В коя от петте рубрики на вестника спада всяка тема от каталога (подсказка за Claude).
+TOPIC_SECTION = {
+    "bg": "България", "armenia": "Армения",
+    "world": "Свят", "europe": "Свят", "ukraine": "Свят", "mideast": "Свят",
+    "economy": "Свят", "crypto": "Свят",
+    "tech": "Технологии и AI", "ai": "Технологии и AI", "science": "Технологии и AI",
+    "games": "Технологии и AI", "cars": "Технологии и AI",
+    "sport": "Любопитно", "culture": "Любопитно", "health": "Любопитно",
+    "env": "Любопитно", "curious": "Любопитно",
+}
+
+
 def load_config():
+    """Настройките са от sources.yaml, а темите и източниците — от общия каталог и профила."""
     with open(BASE / "sources.yaml", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        config = yaml.safe_load(f)
+    with open(CATALOG, encoding="utf-8") as f:
+        catalog = yaml.safe_load(f)
+    profile = {}
+    if PROFILE.exists():
+        with open(PROFILE, encoding="utf-8") as f:
+            profile = yaml.safe_load(f) or {}
+
+    topics = {t["id"]: t for t in catalog["topics"]}
+    chosen = [t for t in profile.get("topics", list(topics)) if t in topics]   # без профил — всички
+    default_hours = config["settings"]["hours_back"]
+    sources, seen = [], set()
+    for t in chosen:
+        for src in topics[t]["sources"]:
+            if src["url"] in seen or src.get("only") == "lite":
+                continue   # един и същ адрес в две теми се тегли веднъж
+            seen.add(src["url"])
+            sources.append(dict(src, topic=t, section=TOPIC_SECTION.get(t, "Свят"),
+                                hours_back=topics[t].get("hours_back", default_hours)))
+    config["sources"] = sources
+    config["profile"] = profile
+    config["hours"] = max([s["hours_back"] for s in sources] or [default_hours])
+    active = {s["section"] for s in sources}
+    config["sections"] = [s for s in SECTIONS if s in active]
+    if profile.get("city"):
+        config["weather"] = profile["city"]
+    return config
 
 
 # ---------- 1. Събиране ----------
@@ -93,6 +136,8 @@ def fetch_source(source, since, limit, summary_chars=300):
                 "link": entry.get("link"),
                 "source": source["name"],
                 "section": source.get("section", ""),
+                "topic": source.get("topic"),
+                "ts": calendar.timegm(parsed) if parsed else time.time(),
             })
             if len(items) >= limit:
                 break
@@ -105,13 +150,32 @@ def fetch_source(source, since, limit, summary_chars=300):
 
 def fetch_all(config):
     settings = config["settings"]
-    since = time.time() - settings["hours_back"] * 3600
+    now = time.time()
     with ThreadPoolExecutor(max_workers=8) as pool:
+        # всеки източник има свой прозорец (hours_back на темата му от каталога)
         results = pool.map(
-            lambda s: fetch_source(s, since, settings["per_source_limit"],
+            lambda s: fetch_source(s, now - s["hours_back"] * 3600, settings["per_source_limit"],
                                    settings.get("summary_chars", 300)),
             config["sources"])
     return [item for items in results for item in items]
+
+
+def drop_never(items, words):
+    """Маха новини с думи, които читателят е записал като „никога“ в профила."""
+    words = [str(w).lower() for w in words]
+    return [it for it in items
+            if not any(w in (it["title"] + " " + it["summary"]).lower() for w in words)]
+
+
+def cap_per_topic(items, limit):
+    """До limit най-пресни новини от тема — иначе при много теми заявката към Claude е огромна."""
+    keep, count = set(), {}
+    for i in sorted(range(len(items)), key=lambda i: -items[i]["ts"]):
+        topic = items[i]["topic"]
+        if count.get(topic, 0) < limit:
+            count[topic] = count.get(topic, 0) + 1
+            keep.add(i)
+    return [it for i, it in enumerate(items) if i in keep]   # редът остава както е
 
 
 # ---------- 2. Махане на очевидни дубликати ----------
@@ -136,7 +200,7 @@ def dedupe(items):
 PROMPT = """Ти си главен редактор на кратък сутрешен вестник на български език.
 Читателят се интересува най-вече от: $interests.
 
-По-долу има списък с новини от последните 24 часа. Всяка започва с номер в [квадратни скоби].
+По-долу има списък с новини от последните $hours. Всяка започва с номер в [квадратни скоби].
 
 Задачи:
 1. Обедини новините, които разказват една и съща история (от различни източници), в една.
@@ -144,9 +208,9 @@ PROMPT = """Ти си главен редактор на кратък сутре
    също обедини — една тема не може да има повече от 2 истории във вестника.
 2. Избери около $max_stories най-важни и най-интересни истории. Предпочитай значими събития пред
    дребни, а теми, отразени от няколко източника, пред такива от един.
-   Включи поне 2 за Армения и поне 2 за технологии/AI, ако има подходящи.
-   Включи поне 3 за България, ако има. Не слагай повече от 6 истории в една рубрика. Рубриката "Любопитно" е за интересни
-   неполитически новини; ако няма подходящи, не я пълни с измислени.
+   $quotas Не слагай повече от 6 истории в една рубрика. Рубриката "Любопитно" е за интересни
+   неполитически новини (спорт, култура, здраве, природа, необичайни истории); ако няма
+   подходящи, не я пълни с измислени.
 3. За всяка история напиши на български:
    - "title": кратко и ясно заглавие (до 12 думи);
    - "title" и "summary" да не звучат по-силно от източника: не превръщай "нападение" в
@@ -184,14 +248,35 @@ def extract_json(text):
     return json.loads(text[start:end + 1])
 
 
-def summarize(items, settings):
+def build_quotas(sections):
+    """Минималният брой истории за рубриките, които читателят следи."""
+    wanted = [(s, text) for s, text in (("България", "поне 3 за България"),
+                                        ("Армения", "поне 2 за Армения"),
+                                        ("Технологии и AI", "поне 2 за технологии/AI"))
+              if s in sections]
+    return "Включи {}, ако има подходящи.".format(", ".join(t for _, t in wanted)) if wanted else ""
+
+
+def summarize(items, settings, config):
     news = "\n".join(
         "[{}] ({}, {}) {} — {}".format(i, it["source"], it["section"], it["title"], it["summary"])
         for i, it in enumerate(items))
+    profile = config["profile"]
+    interests = settings["interests"]
+    if profile.get("повече"):
+        interests += "; особено: " + ", ".join(map(str, profile["повече"]))
+    if profile.get("по-малко"):
+        interests += "; по-малко: " + ", ".join(map(str, profile["по-малко"]))
+    base, longest = settings["hours_back"], config["hours"]
+    hours_text = "{} часа".format(base) if longest <= base else (
+        "{} часа (за теми с по-рядко публикуване — до {} часа)"
+        .format(base, longest))
     prompt = Template(PROMPT).substitute(
-        interests=settings["interests"],
+        interests=interests,
         max_stories=settings["max_stories"],
-        sections=", ".join(SECTIONS),
+        sections=", ".join(config["sections"]),
+        hours=hours_text,
+        quotas=build_quotas(config["sections"]),
         news=news)
 
     cmd = [find_claude(), "-p", "--output-format", "json",
@@ -575,8 +660,10 @@ def main():
             if not items:
                 raise RuntimeError("Нито един източник не върна новини")
             items = dedupe(items)
-            log.info("Общо %d новини след махане на дубликати", len(items))
-            data = summarize(items, config["settings"])
+            items = drop_never(items, config["profile"].get("никога", []))
+            items = cap_per_topic(items, config["settings"].get("max_per_topic", 25))
+            log.info("Общо %d новини след махане на дубликати и таван на тема", len(items))
+            data = summarize(items, config["settings"], config)
             cache.write_text(json.dumps({"data": data, "items": items}, ensure_ascii=False),
                              encoding="utf-8")
 
