@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сутрешен вестник</title>
+<style>
+  :root {
+    --paper: #f6f1e6; --card: #fffdf8; --ink: #1c1a17; --muted: #6b645a;
+    --line: #cfc6b4; --accent: #8b1e1e; --accent-ink: #fff; --ok: #2f6b3a; --soft: #f0e9d9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #17150f; --card: #211e16; --ink: #efe9da; --muted: #a79f8d;
+      --line: #4a4434; --accent: #d9776b; --accent-ink: #17150f; --ok: #7bc48a; --soft: #2a261b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink);
+    font: 16px/1.5 "PT Serif", Georgia, "Times New Roman", serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { text-align: center; border-bottom: 3px double var(--ink); padding-bottom: 12px; margin-bottom: 8px; }
+  .kicker { font-size: 13px; color: var(--muted); letter-spacing: .04em; }
+  h1 { font-size: clamp(32px, 7vw, 48px); line-height: 1.1; margin: 4px 0; }
+  .sub { margin: 0; color: var(--muted); }
+  section { margin-top: 28px; }
+  h2 { font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+    border-bottom: 1px solid var(--ink); padding-bottom: 4px; margin: 0 0 12px;
+    display: flex; gap: 8px; align-items: baseline; }
+  h2 small { margin-left: auto; color: var(--muted); text-transform: none; letter-spacing: 0; font-weight: normal; }
+  .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px 14px; cursor: pointer; position: relative; }
+  .card:hover { border-color: var(--ink); }
+  .card input { position: absolute; opacity: 0; }
+  .card b { display: block; }
+  .card span { color: var(--muted); font-size: 14px; }
+  .card:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--soft); }
+  .card:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card:has(input:checked) b::after { content: " ✓"; color: var(--accent); }
+  .big b { font-size: 20px; }
+  .topics { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+  .topics .card { padding: 8px 10px; }
+  .topics .card span { font-size: 13px; line-height: 1.3; display: block; }
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  button, select, input[type="text"] { font: inherit; color: inherit; }
+  button { border: 1px solid var(--ink); background: transparent; border-radius: 4px; padding: 6px 12px; cursor: pointer; }
+  button:hover { background: var(--soft); }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
+    font-size: 18px; padding: 10px 22px; }
+  button.primary:hover { filter: brightness(1.08); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  input[type="text"], select { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .row label { display: flex; gap: 8px; align-items: center; }
+  .hint { color: var(--muted); font-size: 14px; margin: 6px 0 0; }
+  .chip { display: inline-flex; gap: 6px; align-items: center; background: var(--soft); border: 1px solid var(--line);
+    border-radius: 999px; padding: 2px 10px; font-size: 14px; }
+  .chip button { border: 0; padding: 0 2px; line-height: 1; color: var(--muted); }
+  .results { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+  .results button { width: 100%; text-align: left; background: var(--card); border-color: var(--line); }
+  .words { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .words label > span { font-weight: bold; display: block; }
+  .words .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; min-height: 4px; }
+  .words input { width: 100%; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 32px; }
+  #msg { color: var(--accent); }
+  #panel { margin-top: 20px; border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: 14px 16px; }
+  #panel h3 { margin: 0 0 6px; font-size: 18px; }
+  #panel.done h3 { color: var(--ok); }
+  #panel.error h3 { color: var(--accent); }
+  pre { margin: 8px 0 0; padding: 8px 10px; background: var(--soft); border-radius: 4px; max-height: 220px; overflow: auto;
+    font: 12px/1.45 ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-word; }
+  .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent);
+    border-radius: 50%; animation: s 0.9s linear infinite; vertical-align: -2px; margin-right: 8px; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+  .last { margin-top: 14px; font-size: 14px; color: var(--muted); }
+  .last a { color: var(--accent); }
+  #panel a.chip { color: var(--accent); font-weight: bold; text-decoration: none; padding: 5px 14px; }
+  #panel a.chip:hover { background: var(--card); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="kicker" id="today"></div>
+    <h1>Сутрешен вестник</h1>
+    <p class="sub">Избери какво искаш да четеш</p>
+  </header>
+
+  <section aria-labelledby="h-version">
+    <h2 id="h-version">1 · Версия</h2>
+    <div class="cards big" id="versions">
+      <label class="card"><input type="radio" name="version" value="claude">
+        <b>Claude</b><span>Умно обобщаване и подбор. Една страница, около 17 истории. Иска инсталиран Claude Code.</span></label>
+      <label class="card"><input type="radio" name="version" value="lite">
+        <b>Lite</b><span>Без Claude. Подбира по правила, превежда офлайн. Повече новини на няколко страници.</span></label>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-topics">
+    <h2 id="h-topics">2 · Теми <small id="count"></small></h2>
+    <div class="presets" id="presets"></div>
+    <div class="cards topics" id="topics"></div>
+  </section>
+
+  <section aria-labelledby="h-city">
+    <h2 id="h-city">3 · Град за времето</h2>
+    <div class="row">
+      <input type="text" id="cityq" placeholder="Напр. Пловдив" aria-label="Град" autocomplete="off">
+      <button type="button" id="citygo">Търси</button>
+      <span id="citychosen"></span>
+    </div>
+    <ul class="results" id="cityres"></ul>
+    <p class="hint" id="cityhint"></p>
+  </section>
+
+  <section aria-labelledby="h-count">
+    <h2 id="h-count">4 · Брой истории</h2>
+    <label class="row" id="lbl-lite">Истории от всяка тема
+      <select id="perTopic"></select></label>
+    <label class="row" id="lbl-claude">Общо истории във вестника
+      <select id="maxStories"></select></label>
+    <p class="hint" id="counthint"></p>
+  </section>
+
+  <section aria-labelledby="h-words">
+    <h2 id="h-words">5 · Думи</h2>
+    <div class="words">
+      <label><span>Повече</span><div class="tags" id="tags-повече"></div>
+        <input type="text" data-list="повече" placeholder="дума и Enter" aria-label="Повече"></label>
+      <label><span>По-малко</span><div class="tags" id="tags-по-малко"></div>
+        <input type="text" data-list="по-малко" placeholder="дума и Enter" aria-label="По-малко"></label>
+      <label><span>Никога</span><div class="tags" id="tags-никога"></div>
+        <input type="text" data-list="никога" placeholder="дума и Enter" aria-label="Никога"></label>
+    </div>
+    <p class="hint">„Повече“ вдига историите с тези думи, „по-малко“ ги сваля, „никога“ ги маха напълно.</p>
+  </section>
+
+  <div class="actions">
+    <button type="button" class="primary" id="run">Състави вестника</button>
+    <button type="button" id="save">Запази без пускане</button>
+    <span id="msg" role="status"></span>
+  </div>
+
+  <div id="panel" hidden aria-live="polite"></div>
+  <div class="last" id="last"></div>
+</main>
+
+<script>
+"use strict";
+const TOKEN = "__TOKEN__";
+const MONTHS = ["януари","февруари","март","април","май","юни","юли","август","септември","октомври","ноември","декември"];
+const LISTS = ["повече", "по-малко", "никога"];
+const NAMES = {claude: "Claude", lite: "Lite"};
+const $ = (id) => document.getElementById(id);
+
+const state = {topics: [], presets: [], profile: null, city: null, last: {}, canOpen: false,
+               selected: new Set(), words: {"повече": [], "по-малко": [], "никога": []}, polling: null};
+
+async function api(path, body) {
+  const opts = {headers: {"X-Token": TOKEN}};
+  if (body !== undefined) {
+    opts.method = "POST";
+    opts.headers["Content-Type"] = "application/json";
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ("Грешка " + res.status));
+  return data;
+}
+
+function el(tag, props, ...kids) {
+  const n = Object.assign(document.createElement(tag), props || {});
+  kids.forEach((k) => n.append(k));
+  return n;
+}
+
+function version() { return document.querySelector('input[name="version"]:checked').value; }
+
+function fillSelect(sel, from, to, value) {
+  sel.replaceChildren(...Array.from({length: to - from + 1}, (_, i) => {
+    const o = el("option", {value: from + i, textContent: from + i});
+    o.selected = from + i === value;
+    return o;
+  }));
+}
+
+// ---- теми ----
+function renderTopics() {
+  $("topics").replaceChildren(...state.topics.map((t) => {
+    const box = el("input", {type: "checkbox", value: t.id, checked: state.selected.has(t.id)});
+    box.addEventListener("change", () => {
+      box.checked ? state.selected.add(t.id) : state.selected.delete(t.id);
+      updateCount();
+    });
+    const about = t.about + (t.hours_back ? " · гледа " + t.hours_back + " ч назад" : "");
+    return el("label", {className: "card"}, box, el("b", {textContent: t.name}), el("span", {textContent: about}));
+  }));
+  $("presets").replaceChildren(...state.presets.map((p) => {
+    const b = el("button", {type: "button", textContent: p.name});
+    b.addEventListener("click", () => {
+      state.selected = new Set(p.topics);
+      renderTopics();
+    });
+    return b;
+  }));
+  updateCount();
+}
+
+function updateCount() {
+  $("count").textContent = "избрани " + state.selected.size + " от " + state.topics.length;
+  $("run").disabled = state.selected.size === 0 || (state.polling !== null);
+}
+
+// ---- град ----
+function renderCity() {
+  const box = $("citychosen");
+  box.replaceChildren();
+  if (state.city) {
+    const x = el("button", {type: "button", textContent: "✕", title: "Без град", ariaLabel: "Махни града"});
+    x.addEventListener("click", () => { state.city = null; renderCity(); });
+    box.append(el("span", {className: "chip"}, state.city.name, x));
+  }
+  $("cityhint").textContent = state.city ? "" : "Без град във вестника няма прогноза за времето.";
+}
+
+async function searchCity() {
+  const q = $("cityq").value.trim();
+  const list = $("cityres");
+  list.replaceChildren();
+  if (q.length < 2) return;
+  $("citygo").disabled = true;
+  try {
+    const found = await api("/api/geocode?q=" + encodeURIComponent(q));
+    if (!found.length) list.append(el("li", {textContent: "Не намерих такъв град."}));
+    found.forEach((c) => {
+      const b = el("button", {type: "button", textContent: c.name + " (" + c.lat.toFixed(2) + ", " + c.lon.toFixed(2) + ")"});
+      b.addEventListener("click", () => { state.city = c; list.replaceChildren(); $("cityq").value = ""; renderCity(); });
+      list.append(el("li", {}, b));
+    });
+  } catch (e) {
+    list.append(el("li", {textContent: e.message}));
+  } finally {
+    $("citygo").disabled = false;
+  }
+}
+
+// ---- думи ----
+function renderWords() {
+  LISTS.forEach((name) => {
+    $("tags-" + name).replaceChildren(...state.words[name].map((w) => {
+      const x = el("button", {type: "button", textContent: "✕", ariaLabel: "Махни " + w});
+      x.addEventListener("click", () => { state.words[name] = state.words[name].filter((v) => v !== w); renderWords(); });
+      return el("span", {className: "chip"}, w, x);
+    }));
+  });
+}
+
+document.querySelectorAll("input[data-list]").forEach((inp) => {
+  inp.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const w = inp.value.trim();
+    const list = state.words[inp.dataset.list];
+    if (w && !list.includes(w)) list.push(w);
+    inp.value = "";
+    renderWords();
+  });
+});
+
+// ---- версия ----
+function applyVersion() {
+  const lite = version() === "lite";
+  $("lbl-lite").hidden = !lite;
+  $("lbl-claude").hidden = lite;
+  $("counthint").textContent = lite
+    ? "Lite взима до толкова най-добри истории от всяка избрана тема."
+    : "Claude подбира най-важните истории от всички теми, около толкова на брой, за една страница.";
+}
+document.querySelectorAll('input[name="version"]').forEach((r) => r.addEventListener("change", applyVersion));
+
+// ---- профил ----
+function collect() {
+  return {
+    version: version(),
+    topics: Array.from(state.selected),
+    city: state.city,
+    stories_per_topic: Number($("perTopic").value),
+    max_stories: Number($("maxStories").value),
+    "повече": state.words["повече"], "по-малко": state.words["по-малко"], "никога": state.words["никога"],
+  };
+}
+
+function say(text) { $("msg").textContent = text; }
+
+async function save() {
+  say("");
+  try { await api("/api/profile", collect()); say("Профилът е записан."); return true; }
+  catch (e) { say(e.message); return false; }
+}
+
+// ---- пускане и резултат ----
+function fmtTime(sec) { return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"); }
+
+function renderPanel(s) {
+  const panel = $("panel");
+  panel.hidden = s.state === "idle";
+  panel.className = s.state;
+  const name = NAMES[s.version] || "";
+  const log = el("pre", {textContent: s.lines.join("\n")});
+  if (s.state === "running") {
+    panel.replaceChildren(el("h3", {}, el("span", {className: "spin"}), "Прави се вестникът (" + name + ")… " + fmtTime(s.elapsed)),
+      el("div", {className: "hint", textContent: "Може да отнеме от една до няколко минути. Не затваряй тази страница."}), log);
+  } else if (s.state === "done") {
+    const links = el("div", {className: "row"},
+      el("a", {href: "/file/" + s.version + ".docx?t=" + encodeURIComponent(TOKEN), textContent: "Изтегли .docx", download: ""}));
+    links.firstChild.className = "chip";
+    if (state.canOpen) {
+      const open = el("button", {type: "button", textContent: "Отвори във Word"});
+      open.addEventListener("click", () => api("/api/open", {version: s.version}).catch((e) => say(e.message)));
+      links.append(open);
+    }
+    panel.replaceChildren(el("h3", {textContent: "✔ Готово (" + name + "): " + (s.stories != null ? s.stories + " истории, " : "") + fmtTime(s.elapsed)}),
+      links, el("details", {}, el("summary", {textContent: "Дневник на пускането"}), log));
+  } else if (s.state === "error") {
+    panel.replaceChildren(el("h3", {textContent: "✖ Не се получи (" + name + ")"}),
+      el("div", {textContent: s.error || ""}), log);
+  }
+  log.scrollTop = log.scrollHeight;   // винаги последните редове
+}
+
+async function poll() {
+  try {
+    const s = await api("/api/status");
+    renderPanel(s);
+    if (s.state !== "running") {
+      clearInterval(state.polling); state.polling = null;
+      updateCount();
+      refreshLast();
+    }
+  } catch (e) { say(e.message); }
+}
+
+function startPolling() {
+  if (state.polling) return;
+  state.polling = setInterval(poll, 1000);
+  updateCount();
+  poll();
+}
+
+async function run() {
+  say("");
+  try {
+    await api("/api/run", collect());
+    startPolling();
+  } catch (e) { say(e.message); }
+}
+
+function when(ts) {
+  const d = new Date(ts * 1000);
+  return d.getDate() + " " + MONTHS[d.getMonth()] + ", " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+
+async function refreshLast() {
+  const st = await api("/api/state");
+  state.last = st.last;
+  const box = $("last");
+  box.replaceChildren();
+  const parts = Object.keys(NAMES).filter((v) => st.last[v]);
+  if (!parts.length) return;
+  box.append("Последни броеве: ");
+  parts.forEach((v, i) => {
+    if (i) box.append(" · ");
+    box.append(NAMES[v] + " от " + when(st.last[v].mtime) + " ",
+      el("a", {href: "/file/" + v + ".docx?t=" + encodeURIComponent(TOKEN), textContent: "(изтегли)"}));
+  });
+}
+
+// ---- начало ----
+async function init() {
+  const d = new Date();
+  $("today").textContent = ["неделя","понеделник","вторник","сряда","четвъртък","петък","събота"][d.getDay()] + ", " +
+    d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear() + " г.";
+  const st = await api("/api/state");
+  state.topics = st.topics; state.presets = st.presets; state.canOpen = st.can_open;
+  const p = st.profile;
+  state.selected = new Set(p.topics);
+  state.city = p.city;
+  LISTS.forEach((n) => { state.words[n] = (p[n] || []).slice(); });
+  document.querySelector('input[name="version"][value="' + p.version + '"]').checked = true;
+  fillSelect($("perTopic"), 1, 10, p.stories_per_topic);
+  fillSelect($("maxStories"), 5, 25, p.max_stories);
+  renderTopics(); renderCity(); renderWords(); applyVersion();
+  refreshLast();
+  const s = await api("/api/status");
+  if (s.state === "running") startPolling();
+  else if (s.state !== "idle") renderPanel(s);
+}
+
+$("citygo").addEventListener("click", searchCity);
+$("cityq").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); searchCity(); } });
+$("run").addEventListener("click", run);
+$("save").addEventListener("click", save);
+init().catch((e) => { document.body.prepend(el("p", {textContent: "Не мога да заредя: " + e.message, style: "padding:16px;color:#b00"})); });
+</script>
+</body>
+</html>
