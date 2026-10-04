@@ -27,3 +27,21 @@ def notify(message, title="Сутрешен вестник"):
 
 def desktop_dir():
     return Path.home() / "Desktop"
+
+
+# ---- график „всяка сутрин“ (launchd) ----
+LABEL = "com.sutreshen.vestnik"
+_CLAUDE_DIR = Path(__file__).resolve().parent.parent / "claude"
+
+
+def schedule_enabled():
+    return (Path.home() / "Library" / "LaunchAgents" / (LABEL + ".plist")).exists()
+
+
+def schedule_enable():
+    """Пуска claude/install.sh (launchd, всеки ден в 06:00)."""
+    return subprocess.run(["bash", str(_CLAUDE_DIR / "install.sh")], capture_output=True).returncode == 0
+
+
+def schedule_disable():
+    return subprocess.run(["bash", str(_CLAUDE_DIR / "uninstall.sh")], capture_output=True).returncode == 0

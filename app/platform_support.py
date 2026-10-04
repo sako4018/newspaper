@@ -41,3 +41,18 @@ def copy_to_desktop(src, name):
     dst = desktop / name
     shutil.copyfile(src, dst)
     return dst
+
+
+def schedule_supported():
+    return bool(_impl and hasattr(_impl, "schedule_enable"))
+
+
+def schedule_enabled():
+    return bool(schedule_supported() and _impl.schedule_enabled())
+
+
+def schedule_set(on):
+    """Включва или изключва ежедневното пускане. Връща True при успех."""
+    if not schedule_supported():
+        return False
+    return bool(_impl.schedule_enable() if on else _impl.schedule_disable())

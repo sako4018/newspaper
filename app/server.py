@@ -53,7 +53,8 @@ PRESETS = [
     {"name": "Нищо", "topics": []},
 ]
 
-DEFAULT_PROFILE = {"version": "claude", "city": None, "stories_per_topic": 4,
+# Нов потребител: нищо не е избрано предварително (версия и теми избира сам)
+DEFAULT_PROFILE = {"version": None, "city": None, "stories_per_topic": 4,
                    "max_stories": 17, "повече": [], "по-малко": [], "никога": []}
 
 
@@ -65,11 +66,13 @@ def load_catalog():
 
 
 def load_profile(topic_ids):
-    profile = dict(DEFAULT_PROFILE, topics=list(topic_ids))
+    profile = dict(DEFAULT_PROFILE, topics=[])
     if PROFILE.exists():
         with open(PROFILE, encoding="utf-8") as f:
             saved = yaml.safe_load(f) or {}
         profile.update({k: v for k, v in saved.items() if k in profile})
+        if profile["version"] not in VERSIONS:
+            profile["version"] = None
     profile["topics"] = [t for t in profile["topics"] if t in topic_ids]
     return profile
 
@@ -281,6 +284,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.state()
         if route == "/api/status":
             return self.reply(200, JOB.snapshot())
+        if route == "/api/schedule":
+            return self.reply(200, {"supported": platform_support.schedule_supported(),
+                                    "enabled": platform_support.schedule_enabled()})
         if route == "/api/geocode":
             name = query.get("q", [""])[0].strip()
             if len(name) < 2:
@@ -329,6 +335,15 @@ class Handler(BaseHTTPRequestHandler):
                 if url.path == "/api/run":
                     start_job(profile["version"])
                 return self.reply(200, {"ok": True, "profile": profile})
+            if url.path == "/api/schedule":
+                if not platform_support.schedule_supported():
+                    return self.error(409, "Ежедневното пускане още не е готово за тази система.")
+                on = bool(data.get("on"))
+                if on:
+                    save_profile(validate_profile(data.get("profile") or {}, ids))
+                if not platform_support.schedule_set(on):
+                    return self.error(500, "Не успях да {} графика.".format("включа" if on else "изключа"))
+                return self.reply(200, {"supported": True, "enabled": platform_support.schedule_enabled()})
             if url.path == "/api/open":
                 version = data.get("version")
                 if version not in VERSIONS or not VERSIONS[version]["result"].exists():

@@ -146,6 +146,12 @@
     <span id="msg" role="status"></span>
   </div>
 
+  <section id="sched" hidden>
+    <h2>6 · Всяка сутрин</h2>
+    <p class="hint" id="schedtext"></p>
+    <div class="actions"><button type="button" id="schedbtn"></button></div>
+  </section>
+
   <div id="panel" hidden aria-live="polite"></div>
   <div class="last" id="last"></div>
 </main>
@@ -180,7 +186,19 @@ function el(tag, props, ...kids) {
   return n;
 }
 
-function version() { return document.querySelector('input[name="version"]:checked').value; }
+function version() {
+  const r = document.querySelector('input[name="version"]:checked');
+  return r ? r.value : null;
+}
+
+// Бутоните са изключени, докато няма избрана версия и поне една тема
+function updateButtons() {
+  const ok = version() !== null && state.selected.size > 0;
+  ["run", "save"].forEach((id) => { $(id).disabled = !ok; });
+  $("schedbtn").disabled = !ok && !state.sched;   // изключването не иска избор
+  if (!ok && !$("msg").textContent) $("msg").textContent = "Избери версия и поне една тема.";
+  else if (ok && $("msg").textContent === "Избери версия и поне една тема.") $("msg").textContent = "";
+}
 
 function fillSelect(sel, from, to, value) {
   sel.replaceChildren(...Array.from({length: to - from + 1}, (_, i) => {
@@ -214,6 +232,7 @@ function renderTopics() {
 
 function updateCount() {
   $("count").textContent = "избрани " + state.selected.size + " от " + state.topics.length;
+  updateButtons();
   $("run").disabled = state.selected.size === 0 || (state.polling !== null);
 }
 
@@ -281,6 +300,7 @@ function applyVersion() {
   $("counthint").textContent = lite
     ? "Lite взима до толкова най-добри истории от всяка избрана тема."
     : "Claude подбира най-важните истории от всички теми, около толкова на брой, за една страница.";
+  updateButtons();
 }
 document.querySelectorAll('input[name="version"]').forEach((r) => r.addEventListener("change", applyVersion));
 
@@ -392,11 +412,13 @@ async function init() {
   state.selected = new Set(p.topics);
   state.city = p.city;
   LISTS.forEach((n) => { state.words[n] = (p[n] || []).slice(); });
-  document.querySelector('input[name="version"][value="' + p.version + '"]').checked = true;
+  const vr = p.version && document.querySelector('input[name="version"][value="' + p.version + '"]');
+  if (vr) vr.checked = true;
   fillSelect($("perTopic"), 1, 10, p.stories_per_topic);
   fillSelect($("maxStories"), 5, 25, p.max_stories);
   renderTopics(); renderCity(); renderWords(); applyVersion();
   refreshLast();
+  refreshSchedule();
   const s = await api("/api/status");
   if (s.state === "running") startPolling();
   else if (s.state !== "idle") renderPanel(s);
@@ -404,6 +426,22 @@ async function init() {
 
 $("citygo").addEventListener("click", searchCity);
 $("cityq").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); searchCity(); } });
+async function refreshSchedule() {
+  const s = await api("/api/schedule");
+  $("sched").hidden = !s.supported;
+  if (!s.supported) return;
+  state.sched = s.enabled;
+  $("schedtext").textContent = s.enabled
+    ? "Включено: избраната версия и теми се зареждат всеки ден в 06:00 (ако Mac-ът спи, при събуждане)."
+    : "Изключено. Натисни, за да се зарежда избраната версия с избраните теми всеки ден в 06:00.";
+  $("schedbtn").textContent = s.enabled ? "Изключи ежедневното пускане" : "Запази и включи всяка сутрин";
+}
+async function toggleSchedule() {
+  say("");
+  try { await api("/api/schedule", {on: !state.sched, profile: collect()}); await refreshSchedule(); say(state.sched ? "Графикът е включен." : "Графикът е изключен."); }
+  catch (e) { say(e.message); }
+}
+$("schedbtn").addEventListener("click", toggleSchedule);
 $("run").addEventListener("click", run);
 $("save").addEventListener("click", save);
 init().catch((e) => { document.body.prepend(el("p", {textContent: "Не мога да заредя: " + e.message, style: "padding:16px;color:#b00"})); });
