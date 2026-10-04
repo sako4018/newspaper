@@ -4,5 +4,6 @@
 cd "$(dirname "$0")" || exit 1
 export PATH="$HOME/.local/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin"
 mkdir -p logs
-../.venv/bin/python ../lite/lite.py --auto >> logs/lite.log 2>&1
-exec ../.venv/bin/python vestnik.py --auto
+# caffeinate -i не позволява на Mac-а да заспи, докато върви скриптът.
+caffeinate -i ../.venv/bin/python ../lite/lite.py --auto >> logs/lite.log 2>&1
+exec caffeinate -i ../.venv/bin/python vestnik.py --auto
