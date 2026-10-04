@@ -164,7 +164,7 @@ NOISE = re.compile(r"warn|NotOpenSSL", re.IGNORECASE)
 
 
 def python_for_scripts():
-    venv = ROOT / ".venv" / "bin" / "python"
+    venv = ROOT / ".venv" / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
     return str(venv) if venv.exists() else sys.executable
 
 
