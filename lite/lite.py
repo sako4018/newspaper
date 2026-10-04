@@ -13,7 +13,6 @@ import logging
 import math
 import re
 import shutil
-import subprocess
 import sys
 import time
 import urllib.parse
@@ -28,6 +27,8 @@ import feedparser
 import yaml
 
 BASE = Path(__file__).resolve().parent
+sys.path.insert(0, str(BASE.parent / "app"))
+import platform_support   # всичко, което зависи от системата (macOS)
 OUTPUT = BASE / "output"
 USER_AGENT = "Mozilla/5.0 (Macintosh) VestnikLite/1.0"
 SIMILARITY = 0.28        # над тази стойност две новини се броят за една история
@@ -586,14 +587,14 @@ def main():
     else:
         build_docx(stories, weather, today, order).save(out)
         shutil.copyfile(out, latest)
-        if "--auto" in sys.argv:   # копие на Desktop, до това на Claude версията
-            shutil.copyfile(out, Path.home() / "Desktop" / "Сутрешен вестник Lite.docx")
+        if "--auto" in sys.argv and "--no-desktop" not in sys.argv:   # копие на Desktop
+            platform_support.copy_to_desktop(out, "Сутрешен вестник Lite.docx")
     log.info("Готово: %s (%d истории от %d новини)", out, len(stories), len(items))
     if "--open" in sys.argv:
         if ext == "html":
             webbrowser.open(out.as_uri())
         else:
-            subprocess.run(["open", str(out)])
+            platform_support.open_file(out)
 
 
 if __name__ == "__main__":

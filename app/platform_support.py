@@ -1,0 +1,43 @@
+"""Единствената точка, през която програмите ползват функции, зависещи от системата.
+
+Сега има реализация само за macOS (platform_mac.py). На друга система функциите не правят
+нищо и връщат False, така че вестникът пак се прави, но без отваряне, известия и копие на Desktop.
+"""
+
+import shutil
+import sys
+from pathlib import Path
+
+if sys.platform == "darwin":
+    import platform_mac as _impl
+else:
+    _impl = None
+
+
+def supported():
+    return _impl is not None
+
+
+def open_file(path):
+    return bool(_impl and _impl.open_file(path))
+
+
+def reveal_file(path):
+    return bool(_impl and _impl.reveal_file(path))
+
+
+def notify(message):
+    if _impl:
+        _impl.notify(message)
+
+
+def copy_to_desktop(src, name):
+    """Копие на готовия документ на Desktop. Връща пътя или None, ако няма такава папка."""
+    if not _impl:
+        return None
+    desktop = Path(_impl.desktop_dir())
+    if not desktop.is_dir():
+        return None
+    dst = desktop / name
+    shutil.copyfile(src, dst)
+    return dst

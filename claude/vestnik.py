@@ -31,6 +31,8 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
 BASE = Path(__file__).resolve().parent
+sys.path.insert(0, str(BASE.parent / "app"))
+import platform_support   # всичко, което зависи от системата (macOS)
 NEWSPAPERS = BASE / "newspapers"
 LOGS = BASE / "logs"
 SECTIONS = ["България", "Армения", "Свят", "Технологии и AI", "Любопитно"]
@@ -105,6 +107,8 @@ def load_config():
     config["sections"] = [s for s in SECTIONS if s in active]
     if profile.get("city"):
         config["weather"] = profile["city"]
+    if profile.get("max_stories"):   # общ брой истории, избран в приложението
+        config["settings"]["max_stories"] = int(profile["max_stories"])
     return config
 
 
@@ -607,14 +611,12 @@ def build_docx(data, items, today, weather=None):
 
 # ---------- main ----------
 
-DESKTOP_COPY = Path.home() / "Desktop" / "Сутрешен вестник.docx"
+DESKTOP_NAME = "Сутрешен вестник.docx"
 
 
 def notify(message):
-    """Малко известие в ъгъла на екрана на Mac."""
-    script = 'display notification "{}" with title "Сутрешен вестник"'.format(
-        message.replace('"', "'"))
-    subprocess.run(["osascript", "-e", script], capture_output=True)
+    """Малко известие в ъгъла на екрана (само ако системата го поддържа)."""
+    platform_support.notify(message)
 
 
 def wait_for_internet(max_wait=120):
@@ -669,7 +671,8 @@ def main():
 
         build_docx(data, items, today, weather).save(out)
         shutil.copyfile(out, BASE / "latest.docx")
-        shutil.copyfile(out, DESKTOP_COPY)
+        if "--no-desktop" not in sys.argv:   # приложението за избор на теми не пипа Desktop
+            platform_support.copy_to_desktop(out, DESKTOP_NAME)
         log.info("Готово: %s (%d истории)", out, len(data["stories"]))
         if auto:
             notify("Готов е! {} истории — файлът е на Desktop.".format(len(data["stories"])))
