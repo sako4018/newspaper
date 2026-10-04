@@ -148,6 +148,8 @@ topics:
       - {name: "BBC Health",      url: "https://feeds.bbci.co.uk/news/health/rss.xml"}
       - {name: "Guardian Health", url: "https://www.theguardian.com/society/health/rss"}
       - {name: "NPR Health",      url: "https://feeds.npr.org/1128/rss.xml"}
+      - {name: "Medical Xpress",  url: "https://medicalxpress.com/rss-feed/"}
+      - {name: "ScienceDaily Health", url: "https://www.sciencedaily.com/rss/health_medicine.xml"}
 
   - id: games
     name: Игри
@@ -165,18 +167,25 @@ topics:
     sources:
       - {name: "Guardian Environment", url: "https://www.theguardian.com/environment/rss"}
       - {name: "BBC Science & Env",    url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"}
+      - {name: "Inside Climate News",  url: "https://insideclimatenews.org/feed/"}
+      - {name: "Phys.org Earth",       url: "https://phys.org/rss-feed/earth-news/"}
 
   - id: crypto
     name: Крипто
     about: криптовалути и блокчейн
     sources:
       - {name: "Cointelegraph", url: "https://cointelegraph.com/rss"}
+      - {name: "BeInCrypto",    url: "https://beincrypto.com/feed/"}
+      - {name: "CryptoSlate",   url: "https://cryptoslate.com/feed/"}
+      - {name: "Decrypt",       url: "https://decrypt.co/feed"}
 
   - id: cars
     name: Автомобили
     about: нови коли и индустрия
     sources:
       - {name: "Motor1", url: "https://www.motor1.com/rss/articles/all/"}
+      - {name: "Jalopnik", url: "https://jalopnik.com/rss"}
+      - {name: "Carscoops", url: "https://www.carscoops.com/feed/"}
 
   - id: curious
     name: Любопитно
