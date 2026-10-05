@@ -66,6 +66,8 @@
     border-radius: 6px;
   }
   .download:hover { filter: brightness(1.1); }
+  .buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .buttons .download { min-width: 230px; }
   .small { font-size: 14px; color: var(--muted); margin-top: 12px; }
   h2 {
     font-family: "Playfair Display", Georgia, serif;
@@ -104,20 +106,23 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="dateline">За Mac · безплатно · на български</div>
+    <div class="dateline">За Mac и Windows · безплатно · на български</div>
     <h1>Сутрешен вестник</h1>
     <p class="tagline">Новините, които те интересуват, готови всяка сутрин</p>
   </header>
 
   <section class="hero">
     <p>Всяка сутрин програмата събира новини от БТА, Дневник, BBC, Guardian и още около 80 източника, подбира важното по твоите теми и го подрежда във вестник (Word документ) на твоя Desktop.</p>
-    <a class="download" href="https://github.com/sako4018/newspaper/releases/latest/download/Sutreshen-Vestnik.zip">Изтегли за Mac</a>
-    <div class="small">macOS 12 или по-нов · Apple Silicon и Intel · около 1 ГБ след инсталиране</div>
+    <div class="buttons">
+      <a class="download" href="https://github.com/sako4018/newspaper/releases/latest/download/Sutreshen-Vestnik.zip">Изтегли за Mac</a>
+      <a class="download" href="https://github.com/sako4018/newspaper/releases/latest/download/Sutreshen-Vestnik-Setup.exe">Изтегли за Windows</a>
+    </div>
+    <div class="small">macOS 12 или по-нов · Windows 10 или 11 · около 1 ГБ след инсталиране</div>
   </section>
 
   <div class="cols">
     <div>
-      <h2>Инсталиране</h2>
+      <h2>Инсталиране на Mac</h2>
       <ol>
         <li>Натисни <b>„Изтегли за Mac“</b>. Файлът отива в <b>Downloads</b>.</li>
         <li>Отвори <code>Sutreshen-Vestnik.zip</code>. До него се появява <b>„Инсталирай Сутрешен вестник“</b>.</li>
@@ -128,7 +133,7 @@
       </ol>
     </div>
     <div>
-      <h2>Ако macOS го спре</h2>
+      <h2>Ако Mac-ът го спре</h2>
       <p>Програмата не е подписана при Apple, затова първия път се показва предупреждение. Така се пуска:</p>
       <ol>
         <li>В прозореца на macOS натисни <b>Done</b> (не „Move to Trash“).</li>
@@ -137,6 +142,29 @@
         <li>Натисни <b>Open Anyway</b> още веднъж. Това е само първия път.</li>
       </ol>
       <div class="note">Ако macOS поиска да инсталира „command line developer tools“, съгласи се. Оттам идва Python, на който работи вестникът. След това пусни съветника пак.</div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <h2>Инсталиране на Windows</h2>
+      <ol>
+        <li>Натисни <b>„Изтегли за Windows“</b>. <code>Sutreshen-Vestnik-Setup.exe</code> отива в <b>Downloads</b>.</li>
+        <li>Пусни го с двоен клик.</li>
+        <li>Натискай <b>„Напред &gt;“</b>: версия, теми, град, брой истории, час и печат.</li>
+        <li>Натисни <b>„Инсталиране“</b>. Ако на компютъра няма Python, съветникът го тегли и инсталира сам.</li>
+        <li>На последната страница остави отметката <b>„Направи първия брой сега“</b> и натисни <b>„Готово“</b>.</li>
+      </ol>
+      <p class="small">Не иска администраторски права. Програмата отива в <code>%LOCALAPPDATA%\Сутрешен вестник</code>.</p>
+    </div>
+    <div>
+      <h2>Ако Windows го спре</h2>
+      <p>Програмата не е подписана, затова Windows може да покаже <b>„Windows protected your PC“</b> (SmartScreen):</p>
+      <ol>
+        <li>Натисни <b>More info</b>.</li>
+        <li>Натисни <b>Run anyway</b>.</li>
+      </ol>
+      <div class="note">Ако браузърът пише, че файлът „не се тегли често“, избери <b>Keep</b> (в Edge: „…“ → Keep → Keep anyway).</div>
     </div>
   </div>
 
@@ -150,12 +178,13 @@
   <div class="cols">
     <div>
       <h2>После</h2>
-      <p>За смяна на темите, часа или печата отвори <b>„Сутрешен вестник – настройки“</b> от Applications (или през Spotlight). Новият избор важи от следващия брой.</p>
+      <p>За смяна на темите, часа или печата отвори <b>„Сутрешен вестник – настройки“</b>: на Mac от Applications (или през Spotlight), на Windows от Start. Новият избор важи от следващия брой.</p>
       <p>Първия път macOS може да попита дали „Сутрешен вестник“ може да ползва Desktop. Отговори <b>Allow</b>, иначе вестникът няма къде да се сложи.</p>
     </div>
     <div>
       <h2>Деинсталиране</h2>
-      <p>Отвори <b>„Сутрешен вестник – настройки“</b> и натисни <b>„Деинсталирай…“</b>. Ежедневното пускане спира, а програмата се изтрива. Вестниците на Desktop остават.</p>
+      <p><b>Mac:</b> отвори „Сутрешен вестник – настройки“ и натисни „Деинсталирай…“.<br><b>Windows:</b> Settings → Apps → „Сутрешен вестник“ → Uninstall.</p>
+      <p>Ежедневното пускане спира и програмата се изтрива. Вестниците на Desktop остават.</p>
     </div>
   </div>
 

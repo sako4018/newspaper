@@ -22,7 +22,16 @@
 
 Програмата отива в `~/Library/Application Support/Сутрешен вестник/`. В Applications се появява „Сутрешен вестник – настройки“, откъдето се сменя изборът и се деинсталира.
 
-**Как се прави инсталаторът:** `installer/build.sh` прави `dist/Sutreshen-Vestnik.zip`. Той се качва като Release в GitHub (Releases → Draft a new release → прикачи zip-а). Бутонът на страницата винаги сочи последния Release. Страницата е `docs/index.html` (GitHub Pages от клона `main`, папка `/docs`).
+## Най-лесно: с инсталатора (Windows)
+1. От същата страница натисни „Изтегли за Windows“ и пусни `Sutreshen-Vestnik-Setup.exe`. Ако излезе „Windows protected your PC“, натисни **More info → Run anyway**.
+2. В съветника натискай „Напред >“: версия, теми, град, брой истории, час и печат.
+3. Ако няма Python 3.9–3.12, съветникът го инсталира сам (през `winget`, а ако го няма, от python.org). После прави `.venv`, записва профила и задачата в Task Scheduler.
+
+Програмата отива в `%LOCALAPPDATA%\Сутрешен вестник`, без администраторски права. В Start се появяват „Сутрешен вестник – настройки“ и „Сутрешен вестник – направи брой сега“. Деинсталира се от Settings → Apps. Ако нещо не мине, подробностите са в `install.log` в папката на програмата.
+
+Инсталаторът за Windows е с Inno Setup (`installer/windows/`). Компилира се и се пробва на истински Windows в GitHub Actions (`.github/workflows/windows.yml`): тихо инсталиране, проверка на профила и задачата, един брой Lite и деинсталиране. Когато се публикува Release, `.exe` файлът се прикачва към него автоматично.
+
+**Как се прави инсталаторът за Mac:** `installer/build.sh` прави `dist/Sutreshen-Vestnik.zip`. Той се качва като Release в GitHub (Releases → Draft a new release → прикачи zip-а). Бутонът на страницата винаги сочи последния Release. Страницата е `docs/index.html` (GitHub Pages от клона `main`, папка `/docs`).
 
 ## Ръчно: от кода (4 стъпки)
 
