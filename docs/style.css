@@ -61,7 +61,7 @@ a { color: var(--accent); }
 .masthead { text-align: center; padding: 20px 0 14px; border-bottom: 4px double var(--ink); }
 .masthead .name {
   display: inline-block; color: var(--ink); text-decoration: none;
-  font: 700 clamp(44px, 11vw, 104px)/.95 var(--display); text-transform: uppercase; letter-spacing: .015em;
+  font: 700 clamp(40px, 8vw, 76px)/.95 var(--display); text-transform: uppercase; letter-spacing: .015em;
 }
 .masthead p { margin: 8px 0 0; font-style: italic; color: var(--muted); font-size: clamp(15px, 2.4vw, 19px); }
 .tabs { display: flex; justify-content: center; flex-wrap: wrap; gap: 0 6px; border-bottom: 1px solid var(--ink); }
