@@ -48,10 +48,43 @@ def main():
     py = sys.executable
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
     if version == "claude":
-        return subprocess.call([py, str(HERE / "vestnik.py"), "--auto"], cwd=str(HERE), env=env)
-    with open(logs / "lite.log", "a", encoding="utf-8") as log:
-        return subprocess.call([py, str(ROOT / "lite" / "lite.py"), "--auto"], cwd=str(HERE),
-                               stdout=log, stderr=subprocess.STDOUT, env=env)
+        code = subprocess.call([py, str(HERE / "vestnik.py"), "--auto"], cwd=str(HERE), env=env)
+        result = HERE / "latest.docx"
+    else:
+        with open(logs / "lite.log", "a", encoding="utf-8") as log:
+            code = subprocess.call([py, str(ROOT / "lite" / "lite.py"), "--auto"], cwd=str(HERE),
+                                   stdout=log, stderr=subprocess.STDOUT, env=env)
+        result = ROOT / "lite" / "output" / "latest.docx"
+    if code == 0 and profile_print():
+        print_issue(result, logs)
+    return code
+
+
+def profile_print():
+    try:
+        text = PROFILE.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return re.search(r"^print:\s*true\s*$", text, re.MULTILINE) is not None
+
+
+def print_issue(result, logs):
+    """Печата днешния брой с програмата за .docx (Word), веднъж на ден. Записва в logs/print.log."""
+    today = time.strftime("%Y-%m-%d")
+    stamp = logs / ("printed-" + today)
+    with open(logs / "print.log", "a", encoding="utf-8") as log:
+        def note(text):
+            log.write("{} run.py: {}\n".format(time.strftime("%Y-%m-%d %H:%M:%S"), text))
+        if stamp.exists():
+            return note("днешният брой вече е отпечатан")
+        if not result.exists() or time.strftime("%Y-%m-%d", time.localtime(result.stat().st_mtime)) != today:
+            return note("няма днешен брой ({})".format(result))
+        try:
+            os.startfile(str(result), "print")
+        except OSError as e:
+            return note("не успях да печатам: {}".format(e))
+        stamp.touch()
+        note("изпратено към принтера")
 
 
 if __name__ == "__main__":

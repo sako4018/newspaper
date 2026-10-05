@@ -4,6 +4,7 @@
 """
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -64,8 +65,20 @@ def schedule_enabled():
     return _powershell("Get-ScheduledTask -TaskName {} -ErrorAction Stop".format(_q(TASK))).returncode == 0
 
 
+def _schedule_time():
+    """Часът от профила (schedule_time: "06:30"); ако го няма, 06:00."""
+    try:
+        text = (_ROOT / "lite" / "profile.yaml").read_text(encoding="utf-8")
+    except OSError:
+        return "06:00"
+    m = re.search(r"^schedule_time:\s*[\"']?(\d{1,2}):(\d{2})", text, re.MULTILINE)
+    if not m or int(m.group(1)) > 23 or int(m.group(2)) > 59:
+        return "06:00"
+    return "{:02d}:{:02d}".format(int(m.group(1)), int(m.group(2)))
+
+
 def schedule_enable():
-    """Задача всеки ден в 06:00; ако компютърът е бил изключен, се пуска при включване."""
+    """Задача всеки ден в часа от профила; ако компютърът е бил изключен, се пуска при включване."""
     venv_python = _ROOT / ".venv" / "Scripts" / "python.exe"
     python = venv_python if venv_python.exists() else Path(sys.executable)
     windowless = python.with_name("pythonw.exe")      # без черен прозорец
@@ -74,10 +87,11 @@ def schedule_enable():
     run_py = _ROOT / "claude" / "run.py"
     script = (
         "$a = New-ScheduledTaskAction -Execute {py} -Argument {arg} -WorkingDirectory {wd};"
-        "$t = New-ScheduledTaskTrigger -Daily -At 6:00am;"
+        "$t = New-ScheduledTaskTrigger -Daily -At {at};"
         "$s = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries;"
         "Register-ScheduledTask -TaskName {name} -Action $a -Trigger $t -Settings $s -Force | Out-Null"
-    ).format(py=_q(python), arg=_q('"{}"'.format(run_py)), wd=_q(run_py.parent), name=_q(TASK))
+    ).format(py=_q(python), arg=_q('"{}"'.format(run_py)), wd=_q(run_py.parent), name=_q(TASK),
+             at=_q(_schedule_time()))
     return _powershell(script).returncode == 0
 
 
