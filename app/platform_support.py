@@ -6,6 +6,7 @@
 
 import shutil
 import sys
+import time
 from pathlib import Path
 
 if sys.platform == "darwin":
@@ -33,14 +34,26 @@ def notify(message):
         _impl.notify(message)
 
 
-def copy_to_desktop(src, name):
-    """Копие на готовия документ на Desktop. Връща пътя или None, ако няма такава папка."""
+ARCHIVE_NAME = "Сутрешен вестник"   # папката на Desktop с всички броеве
+
+
+def save_issue(src):
+    """Пази всеки брой в Desktop/Сутрешен вестник/дд.мм.гггг чч.мм.docx (":" и "/" не може в име на файл).
+
+    Нищо не се презаписва: втори брой в същата минута става „... (2).docx“.
+    Връща пътя или None, ако няма Desktop.
+    """
     if not _impl:
         return None
     desktop = Path(_impl.desktop_dir())
     if not desktop.is_dir():
         return None
-    dst = desktop / name
+    folder = desktop / ARCHIVE_NAME
+    folder.mkdir(exist_ok=True)
+    stem = time.strftime("%d.%m.%Y %H.%M")
+    dst, n = folder / (stem + ".docx"), 2
+    while dst.exists():
+        dst, n = folder / "{} ({}).docx".format(stem, n), n + 1
     shutil.copyfile(src, dst)
     return dst
 

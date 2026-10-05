@@ -587,8 +587,8 @@ def main():
     else:
         build_docx(stories, weather, today, order).save(out)
         shutil.copyfile(out, latest)
-        if "--auto" in sys.argv and "--no-desktop" not in sys.argv:   # копие на Desktop
-            platform_support.copy_to_desktop(out, "Сутрешен вестник Lite.docx")
+        if "--no-desktop" not in sys.argv:   # всеки брой отива в папката на Desktop
+            platform_support.save_issue(out)
     log.info("Готово: %s (%d истории от %d новини)", out, len(stories), len(items))
     if "--open" in sys.argv:
         if ext == "html":

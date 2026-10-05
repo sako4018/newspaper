@@ -613,9 +613,6 @@ def build_docx(data, items, today, weather=None):
 
 # ---------- main ----------
 
-DESKTOP_NAME = "Сутрешен вестник.docx"
-
-
 def notify(message):
     """Малко известие в ъгъла на екрана (само ако системата го поддържа)."""
     platform_support.notify(message)
@@ -673,11 +670,12 @@ def main():
 
         build_docx(data, items, today, weather).save(out)
         shutil.copyfile(out, BASE / "latest.docx")
-        if "--no-desktop" not in sys.argv:   # приложението за избор на теми не пипа Desktop
-            platform_support.copy_to_desktop(out, DESKTOP_NAME)
+        if "--no-desktop" not in sys.argv:   # всеки брой отива в папката на Desktop
+            platform_support.save_issue(out)
         log.info("Готово: %s (%d истории)", out, len(data["stories"]))
         if auto:
-            notify("Готов е! {} истории — файлът е на Desktop.".format(len(data["stories"])))
+            notify("Готов е! {} истории — в папката „{}“ на Desktop.".format(
+                len(data["stories"]), platform_support.ARCHIVE_NAME))
     except Exception as e:
         log.exception("Вестникът не беше създаден")
         if auto:

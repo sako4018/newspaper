@@ -182,8 +182,8 @@ def start_job(version):
             raise RuntimeError("Вестник вече се прави. Изчакай да свърши.")
         JOB.state, JOB.version, JOB.lines = "running", version, []
         JOB.started, JOB.finished, JOB.stories, JOB.error = time.time(), None, None, None
-    # --no-desktop: приложението не пипа копието на Desktop (то е за графика в 06:00)
-    cmd = [python_for_scripts(), "-u", str(cfg["script"]), "--no-desktop"]
+    # И броят от приложението се пази в папката на Desktop, както сутрешният.
+    cmd = [python_for_scripts(), "-u", str(cfg["script"])]
     try:
         proc = subprocess.Popen(cmd, cwd=str(cfg["cwd"]), stdin=subprocess.DEVNULL,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
