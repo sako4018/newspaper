@@ -1,0 +1,173 @@
+/* Сутрешен вестник: стил на сайта за сваляне. Принципите са в STYLE.md. */
+
+:root {
+  --paper: #f1ebdd;
+  --sheet: #f8f4ea;
+  --ink: #1b1915;
+  --muted: #675f52;
+  --soft: #d2c8b4;
+  --accent: #9b1c1c;
+  --accent-ink: #ffffff;
+  --tape: rgba(222, 201, 140, .8);
+  --shadow: rgba(40, 30, 10, .3);
+  --display: "Oswald", "Arial Narrow", Impact, sans-serif;
+  --text: "PT Serif", Georgia, "Times New Roman", serif;
+  --hand: "Caveat", "Segoe Script", cursive;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #141311;
+    --sheet: #1d1b18;
+    --ink: #ece6d8;
+    --muted: #a69c8a;
+    --soft: #3a352c;
+    --accent: #e0645c;
+    --accent-ink: #1a0b0a;
+    --tape: rgba(170, 140, 80, .55);
+    --shadow: rgba(0, 0, 0, .6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #141311;
+  --sheet: #1d1b18;
+  --ink: #ece6d8;
+  --muted: #a69c8a;
+  --soft: #3a352c;
+  --accent: #e0645c;
+  --accent-ink: #1a0b0a;
+  --tape: rgba(170, 140, 80, .55);
+  --shadow: rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 18px/1.6 var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+.skip { position: absolute; left: -999px; top: 8px; background: var(--ink); color: var(--paper); padding: 8px 14px; z-index: 10; }
+.skip:focus { left: 8px; }
+
+/* ---------- Горна част: дата, име, раздели ---------- */
+.topline {
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 10px 0; border-bottom: 1px solid var(--ink);
+  font: 500 12px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+}
+.masthead { text-align: center; padding: 20px 0 14px; border-bottom: 4px double var(--ink); }
+.masthead .name {
+  display: inline-block; color: var(--ink); text-decoration: none;
+  font: 700 clamp(44px, 11vw, 104px)/.95 var(--display); text-transform: uppercase; letter-spacing: .015em;
+}
+.masthead p { margin: 8px 0 0; font-style: italic; color: var(--muted); font-size: clamp(15px, 2.4vw, 19px); }
+.tabs { display: flex; justify-content: center; flex-wrap: wrap; gap: 0 6px; border-bottom: 1px solid var(--ink); }
+.tabs a {
+  padding: 11px 18px 9px; color: var(--ink); text-decoration: none; border-bottom: 3px solid transparent;
+  font: 500 15px var(--display); letter-spacing: .14em; text-transform: uppercase;
+}
+.tabs a:hover { border-bottom-color: var(--soft); }
+.tabs a[aria-current="page"] { font-weight: 700; border-bottom-color: var(--ink); }
+
+/* ---------- Заглавия и бутони ---------- */
+h1, h2, h3 { font-family: var(--display); font-weight: 700; margin: 0; }
+h1 { text-transform: uppercase; line-height: 1.05; }
+.btn {
+  display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); background: transparent;
+  border: 2px solid var(--ink); padding: 12px 22px;
+  font: 500 17px var(--display); letter-spacing: .07em; text-transform: uppercase;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.btn svg { width: 20px; height: 20px; flex: none; }
+.btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--ink); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* ---------- Ръчни детайли (само тези три) ---------- */
+.stamp {
+  display: inline-block; border: 3px solid var(--accent); color: var(--accent); border-radius: 4px;
+  font: 700 21px var(--display); letter-spacing: .13em; padding: 3px 14px; transform: rotate(-7deg); opacity: .9;
+}
+.note { display: inline-block; font: 700 26px/1.1 var(--hand); color: var(--accent); transform: rotate(-3deg); }
+.paper {
+  position: relative; width: min(100%, 340px); background: var(--sheet); border: 1px solid var(--soft);
+  padding: 16px 16px 20px; transform: rotate(2deg);
+  box-shadow: 0 2px 0 var(--soft), 0 18px 34px -10px var(--shadow);
+}
+.paper::before, .paper::after {
+  content: ""; position: absolute; top: -11px; width: 64px; height: 22px; background: var(--tape);
+}
+.paper::before { left: -18px; transform: rotate(-36deg); }
+.paper::after { right: -18px; transform: rotate(36deg); }
+.m-title { font: 700 26px/1 var(--display); text-transform: uppercase; text-align: center; border-bottom: 3px double var(--ink); padding-bottom: 7px; }
+.m-date { text-align: center; font: 500 9px var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 6px 0 8px; }
+.m-label { font: 500 8px var(--display); letter-spacing: .16em; text-transform: uppercase; border-bottom: 1px solid var(--ink); margin: 9px 0 5px; padding-bottom: 1px; }
+.m-cols { display: grid; grid-template-columns: 1fr 1fr; }
+.m-cols > div { padding-right: 9px; }
+.m-cols > div + div { padding: 0 0 0 9px; border-left: 1px solid var(--soft); }
+.m-head { height: 8px; background: var(--ink); margin: 6px 0 5px; width: 92%; }
+.m-head.s { width: 62%; }
+.m-line { height: 3px; background: var(--soft); margin: 4px 0; }
+.m-line.s { width: 70%; }
+
+/* ---------- Начало ---------- */
+.front { display: grid; grid-template-columns: 1.2fr 1fr; gap: 0; padding: 36px 0 44px; }
+.lead { padding-right: 36px; border-right: 1px solid var(--soft); }
+.lead h1 { font-size: clamp(34px, 6vw, 62px); margin: 0 0 16px; }
+.lead .sub { font-size: 20px; margin: 0 0 26px; max-width: 30em; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
+.buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+.hint { margin: 16px 0 0; min-height: 1.2em; }
+.showcase { padding-left: 36px; display: flex; align-items: center; justify-content: center; }
+
+/* ---------- Страници с инсталиране и въпроси ---------- */
+.page { max-width: 720px; margin: 0 auto; padding: 36px 0 24px; }
+.page h1 { font-size: clamp(30px, 5vw, 46px); margin: 0 0 10px; }
+.page .sub { margin: 0 0 22px; color: var(--muted); }
+ol.steps { margin: 28px 0 0; padding: 0; list-style: none; counter-reset: s; }
+ol.steps li { counter-increment: s; position: relative; padding: 0 0 0 52px; margin: 0 0 18px; }
+ol.steps li::before {
+  content: counter(s); position: absolute; left: 0; top: -2px; width: 36px; height: 36px; border: 2px solid var(--ink);
+  display: grid; place-items: center; font: 700 19px var(--display);
+}
+.warn { margin-top: 34px; border: 2px solid var(--ink); background: var(--sheet); padding: 18px 20px 6px; }
+.warn h2 { font-size: 15px; letter-spacing: .16em; text-transform: uppercase; margin: 0 0 4px; }
+.warn ol.steps { margin-top: 14px; }
+.warn ol.steps li { padding-left: 44px; margin-bottom: 14px; }
+.warn ol.steps li::before { width: 30px; height: 30px; font-size: 16px; }
+.aside { margin: 18px 0 0; text-align: right; }
+.more { margin: 34px 0 0; padding-top: 14px; border-top: 1px solid var(--soft); font: 500 15px var(--display); letter-spacing: .12em; text-transform: uppercase; }
+.more a { margin-right: 22px; }
+
+.faq { margin: 26px 0 0; }
+.faq h2 { font-size: 22px; margin: 28px 0 4px; }
+.faq p { margin: 0; }
+
+code { font: .85em ui-monospace, Menlo, Consolas, monospace; background: var(--sheet); border: 1px solid var(--soft); padding: 1px 6px; border-radius: 3px; overflow-wrap: anywhere; }
+
+footer {
+  margin-top: 36px; border-top: 4px double var(--ink); padding: 16px 0 40px;
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--muted);
+}
+
+/* ---------- Телефон ---------- */
+@media (max-width: 820px) {
+  .front { grid-template-columns: 1fr; padding-top: 28px; }
+  .lead { padding-right: 0; border-right: 0; padding-bottom: 38px; border-bottom: 1px solid var(--soft); }
+  .showcase { padding: 42px 0 8px; }
+  .btn { width: 100%; justify-content: center; }
+  .buttons { width: 100%; }
+  .tabs a { padding: 10px 11px 8px; font-size: 14px; letter-spacing: .1em; }
+  .topline { justify-content: center; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .btn { transition: none; }
+}
