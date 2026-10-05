@@ -124,6 +124,13 @@ def validate_profile(data, topic_ids):
 
 
 def save_profile(profile):
+    # Часът и печатът се задават от съветника за инсталиране; страницата не ги пипа.
+    if PROFILE.exists():
+        with open(PROFILE, encoding="utf-8") as f:
+            saved = yaml.safe_load(f) or {}
+        for key in ("schedule_time", "print"):
+            if key in saved and key not in profile:
+                profile[key] = saved[key]
     text = yaml.safe_dump(profile, allow_unicode=True, sort_keys=False)
     tmp = PROFILE.with_suffix(".tmp")
     tmp.write_text(text, encoding="utf-8")

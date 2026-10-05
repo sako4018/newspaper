@@ -1,5 +1,6 @@
 #!/bin/bash
-# Включва автоматичното пускане на „Сутрешен вестник“ всеки ден в 06:00.
+# Включва автоматичното пускане на „Сутрешен вестник“ всеки ден. Часът е в профила
+# (schedule_time: "06:30"); ако го няма, е 06:00.
 #
 # macOS не позволява на launchd да чете папката Desktop, затова launchd пуска
 # малко приложение („Сутрешен вестник.app“), а то пуска run.sh. Първия път macOS
@@ -10,6 +11,15 @@ LABEL="com.sutreshen.vestnik"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 APP="$HOME/Applications/Сутрешен вестник.app"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
+
+TIME=$(sed -n 's/^schedule_time:[[:space:]]*//p' "$DIR/../lite/profile.yaml" 2>/dev/null | head -n 1 | tr -d "\"' \r")
+HOUR=${TIME%%:*}
+MINUTE=${TIME##*:}
+case "$HOUR$MINUTE" in
+    ''|*[!0-9]*) HOUR=6; MINUTE=0 ;;
+esac
+HOUR=$((10#$HOUR))
+MINUTE=$((10#$MINUTE))
 
 chmod +x "$DIR/run.sh"
 mkdir -p "$HOME/Applications" "$HOME/Library/LaunchAgents"
@@ -29,15 +39,15 @@ cat > "$PLIST" <<EOF
         <string>-g</string>
         <string>$APP</string>
     </array>
-    <!-- Всеки ден в 06:00. Ако Mac спи, се пуска при събуждане. -->
+    <!-- Всеки ден в избрания час. Ако Mac спи, се пуска при събуждане. -->
     <key>StartCalendarInterval</key>
     <dict>
         <key>Hour</key>
-        <integer>6</integer>
+        <integer>$HOUR</integer>
         <key>Minute</key>
-        <integer>0</integer>
+        <integer>$MINUTE</integer>
     </dict>
-    <!-- И при влизане в профила (ако Mac е бил изключен в 06:00). -->
+    <!-- И при влизане в профила (ако Mac е бил изключен в този час). -->
     <key>RunAtLoad</key>
     <true/>
 </dict>
@@ -46,4 +56,4 @@ EOF
 
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$PLIST"
-echo "Готово: вестникът ще се прави всеки ден в 06:00."
+printf 'Готово: вестникът ще се прави всеки ден в %02d:%02d.\n' "$HOUR" "$MINUTE"
