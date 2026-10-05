@@ -9,6 +9,8 @@ let fm = FileManager.default
 let home = fm.homeDirectoryForCurrentUser
 let installDir = home.appendingPathComponent("Library/Application Support/Сутрешен вестник")
 let settingsApp = home.appendingPathComponent("Applications/Сутрешен вестник – настройки.app")
+// Псевдоним (alias) на Desktop към приложението за настройки; ако не му трябва, човек просто го трие.
+let desktopIcon = home.appendingPathComponent("Desktop/Сутрешен вестник – настройки")
 let venvPython = installDir.appendingPathComponent(".venv/bin/python")
 let resources = Bundle.main.resourceURL!
 
@@ -287,7 +289,7 @@ class Wizard: NSObject, NSWindowDelegate {
             views.append(remove)
         } else {
             views.append(label("Този съветник ще инсталира „Сутрешен вестник“ на твоя Mac."))
-            views.append(label("Всяка сутрин програмата събира новини от БТА, Дневник, BBC, Guardian и още около 80 източника и ги подрежда в Word документ (.docx) на Desktop."))
+            views.append(label("Всяка сутрин програмата събира новини от БТА, Дневник, BBC, Guardian и още около 80 източника и ги подрежда в Word документ (.docx) в папка „Сутрешен вестник“ на Desktop."))
             views.append(label("Ще избереш:\n   •  версия (Claude или Lite)\n   •  теми\n   •  град за времето и час за всеки ден\n   •  дали да се печата"))
             views.append(label("Трябва ти интернет и около 1 ГБ свободно място. Инсталирането отнема няколко минути.", size: 12, color: .secondaryLabelColor))
         }
@@ -499,12 +501,11 @@ class Wizard: NSObject, NSWindowDelegate {
     func pageDone() {
         titleLabel.stringValue = "Готово"
         let time = String(format: "%02d:%02d", choices.hour, choices.minute)
-        let name = choices.version == "claude" ? "Сутрешен вестник.docx" : "Сутрешен вестник Lite.docx"
         stack([
             label("✅  Готово!", size: 22, bold: true),
-            label("Всеки ден в \(time) вестникът се прави сам и се появява на Desktop като „\(name)“."),
+            label("Всеки ден в \(time) вестникът се прави сам. Всеки брой се пази на Desktop в папка „Сутрешен вестник“ с име като „05.10.2026 06.30.docx“."),
             label("Първият брой се прави още сега. Първия път macOS може да попита дали „Сутрешен вестник“ може да ползва папката Desktop. Отговори Allow."),
-            label("Настройките сменяш от Applications → „Сутрешен вестник – настройки“. Там е и деинсталирането.", size: 12, color: .secondaryLabelColor),
+            label("Настройките сменяш от иконката „Сутрешен вестник – настройки“ на Desktop (ако не ти трябва, изтрий я; приложението остава в Applications). Там е и деинсталирането.", size: 12, color: .secondaryLabelColor),
         ])
         nextButton.title = "Затвори"
     }
@@ -661,6 +662,12 @@ class Wizard: NSObject, NSWindowDelegate {
             try? fm.removeItem(at: settingsApp)
             run("/usr/bin/ditto", [Bundle.main.bundlePath, settingsApp.path])
             run("/usr/bin/xattr", ["-dr", "com.apple.quarantine", settingsApp.path])
+            // Иконка на Desktop само при първото инсталиране: при смяна на настройките не се връща, ако е изтрита.
+            if let data = try? settingsApp.bookmarkData(options: .suitableForBookmarkFile,
+                                                       includingResourceValuesForKeys: nil, relativeTo: nil) {
+                try? fm.removeItem(at: desktopIcon)
+                try? URL.writeBookmarkData(data, to: desktopIcon)
+            }
         }
         return nil
     }
@@ -681,7 +688,7 @@ class Wizard: NSObject, NSWindowDelegate {
     @objc func uninstall() {
         let a = NSAlert()
         a.messageText = "Да деинсталирам ли „Сутрешен вестник“?"
-        a.informativeText = "Спира ежедневното пускане и изтрива програмата, настройките и старите броеве в нея. Вестниците на Desktop остават."
+        a.informativeText = "Спира ежедневното пускане и изтрива програмата, настройките и старите броеве в нея. Папката с броевете на Desktop остава."
         a.alertStyle = .warning
         a.addButton(withTitle: "Деинсталирай")
         a.addButton(withTitle: "Отказ")
@@ -689,6 +696,7 @@ class Wizard: NSObject, NSWindowDelegate {
         run("/bin/bash", [installDir.appendingPathComponent("claude/uninstall.sh").path])
         try? fm.removeItem(at: installDir)
         try? fm.removeItem(at: settingsApp)
+        try? fm.removeItem(at: desktopIcon)
         let done = NSAlert()
         done.messageText = "„Сутрешен вестник“ е деинсталиран."
         done.runModal()
