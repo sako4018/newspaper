@@ -136,10 +136,10 @@ h1 { text-transform: uppercase; line-height: 1.05; }
 .side dt { font: 500 13px/1.9 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .side dd { margin: 0; }
 .section-title { font-size: clamp(26px, 4vw, 36px); text-transform: uppercase; margin: 0 0 22px; }
-.topics { padding: 34px 0 60px; }
+.topics { padding: 34px 0 150px; }
 .lede { margin: -8px 0 22px; max-width: 40em; }
 .tgrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
-.tcard { position: relative; height: 84px; outline: none; }
+.tcard { position: relative; height: 64px; outline: none; cursor: pointer; }
 .tcard .pop {
   position: absolute; top: 0; left: 0; right: 0; min-height: 100%; background: var(--sheet);
   border: 1px solid var(--soft); border-top: 3px solid var(--ink); padding: 11px 12px;
@@ -148,13 +148,11 @@ h1 { text-transform: uppercase; line-height: 1.05; }
 .tcard:nth-child(6n+1) .pop { transform-origin: top left; }
 .tcard:nth-child(6n) .pop { transform-origin: top right; }
 .tcard h3 { font-size: 17px; line-height: 1.15; text-transform: uppercase; letter-spacing: .03em; }
-.tcard .about, .tcard .src { display: none; }
-.tcard .about { margin: 4px 0 8px; font-size: 14px; line-height: 1.35; }
-.tcard .src { margin: 0; padding-top: 8px; border-top: 1px solid var(--soft); font-size: 13px; line-height: 1.45; color: var(--muted); }
+.tcard .src { display: none; margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--soft); font-size: 13px; line-height: 1.45; color: var(--muted); }
 .tcard .src b { display: block; font: 500 11px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 1px; }
 .tcard:hover, .tcard:focus-within { z-index: 5; }
 .tcard:hover .pop, .tcard:focus-within .pop { transform: scale(1.1); box-shadow: 4px 4px 0 var(--ink); }
-.tcard:hover .about, .tcard:hover .src, .tcard:focus-within .about, .tcard:focus-within .src { display: block; }
+.tcard:hover .src, .tcard:focus-within .src { display: block; }
 .tcard:focus-visible .pop { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* ---------- Страници с инсталиране и въпроси ---------- */
@@ -208,14 +206,11 @@ code { font: .85em ui-monospace, Menlo, Consolas, monospace; background: var(--s
   .side, .side.claude, .side.lite { padding: 34px 16px 30px; }
   .side.claude { border-right: 0; border-bottom: 4px double var(--ink); }
 }
-@media (hover: none), (max-width: 520px) {
-  .tgrid { grid-template-columns: 1fr 1fr; }
-  .tcard { height: auto; }
-  .tcard .pop, .tcard:nth-child(n) .pop { position: static; height: 100%; transform: none !important; box-shadow: none !important; }
-  .tcard .about, .tcard .src { display: block; }
-}
 @media (max-width: 520px) {
-  .tgrid { grid-template-columns: 1fr; }
+  .tgrid { grid-template-columns: 1fr 1fr; }
+  .tcard:nth-child(n) .pop { transform-origin: top center; }
+  .tcard:nth-child(2n+1) .pop { transform-origin: top left; }
+  .tcard:nth-child(2n) .pop { transform-origin: top right; }
 }
 @media (prefers-reduced-motion: reduce) {
   .tcard .pop { transition: none; }
