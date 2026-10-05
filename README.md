@@ -15,7 +15,16 @@
 - Интернет връзка
 - Microsoft Word или друга програма, която отваря `.docx`
 
-## Как се инсталира (4 стъпки)
+## Най-лесно: с инсталатора (Mac)
+1. От страницата [sako4018.github.io/newspaper](https://sako4018.github.io/newspaper/) натисни „Изтегли за Mac“. Файлът `Sutreshen-Vestnik.zip` отива в Downloads.
+2. Отвори го и пусни „Инсталирай Сутрешен вестник“. Първия път macOS го спира, защото не е подписан при Apple: натисни **Done**, после **System Settings → Privacy & Security → Open Anyway**.
+3. В съветника избери версия, теми, град, час и дали да се печата и натискай „Продължи“ до „Инсталирай“.
+
+Програмата отива в `~/Library/Application Support/Сутрешен вестник/`. В Applications се появява „Сутрешен вестник – настройки“, откъдето се сменя изборът и се деинсталира.
+
+**Как се прави инсталаторът:** `installer/build.sh` прави `dist/Sutreshen-Vestnik.zip`. Той се качва като Release в GitHub (Releases → Draft a new release → прикачи zip-а). Бутонът на страницата винаги сочи последния Release. Страницата е `docs/index.html` (GitHub Pages от клона `main`, папка `/docs`).
+
+## Ръчно: от кода (4 стъпки)
 
 **1. Изтегли проекта**
 ```bash
