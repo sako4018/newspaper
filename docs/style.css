@@ -124,10 +124,10 @@ h1 { text-transform: uppercase; line-height: 1.05; }
 
 /* ---------- Версии и теми (начало) ---------- */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.versions { display: grid; grid-template-columns: 1fr 1fr; border-top: 4px double var(--ink); border-bottom: 4px double var(--ink); }
+.versions { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--soft); border-bottom: 1px solid var(--soft); }
 .side { padding: 44px 40px 40px; }
 .side .inner { max-width: 500px; }
-.side.claude { background: var(--sheet); padding-left: max(16px, calc((100vw - 1040px) / 2 + 16px)); border-right: 1px solid var(--ink); }
+.side.claude { background: var(--sheet); padding-left: max(16px, calc((100vw - 1040px) / 2 + 16px)); border-right: 1px solid var(--soft); }
 .side.lite { padding-right: max(16px, calc((100vw - 1040px) / 2 + 16px)); }
 .side h3 { font-size: clamp(40px, 6vw, 64px); line-height: 1; text-transform: uppercase; }
 .side .tag { margin: 6px 0 20px; font: 500 15px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
@@ -204,7 +204,7 @@ code { font: .85em ui-monospace, Menlo, Consolas, monospace; background: var(--s
 @media (max-width: 820px) {
   .versions { grid-template-columns: 1fr; }
   .side, .side.claude, .side.lite { padding: 34px 16px 30px; }
-  .side.claude { border-right: 0; border-bottom: 4px double var(--ink); }
+  .side.claude { border-right: 0; border-bottom: 1px solid var(--soft); }
 }
 @media (max-width: 520px) {
   .tgrid { grid-template-columns: 1fr 1fr; }
