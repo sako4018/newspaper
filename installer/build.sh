@@ -29,7 +29,8 @@ EOF
 
 echo "3/5 Компилирам съветника (Apple Silicon и Intel)..."
 # Новото SDK понякога е по-ново от компилатора, затова се пробват всички, от най-новото надолу.
-for SDK in $(ls -d /Library/Developer/CommandLineTools/SDKs/MacOSX[0-9]*.*.sdk 2>/dev/null | sort -rV); do
+# На GitHub Actions няма CommandLineTools, затова накрая се пробва и SDK-то на Xcode.
+for SDK in $(ls -d /Library/Developer/CommandLineTools/SDKs/MacOSX[0-9]*.*.sdk 2>/dev/null | sort -rV) $(xcrun --show-sdk-path 2>/dev/null); do
     if swiftc -O -sdk "$SDK" -target arm64-apple-macos12 -o "$TMP/arm64" installer/Wizard.swift 2>"$TMP/err"; then
         break
     fi

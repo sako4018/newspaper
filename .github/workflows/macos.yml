@@ -1,0 +1,57 @@
+# Прави инсталатора за Mac (dist/Sutreshen-Vestnik.zip) с installer/build.sh и го слага в Release.
+# При нов таг го прикачва към този Release; при промяна в main подменя файла в последния Release,
+# така бутонът „Изтегли за Mac“ на сайта (/releases/latest/download/Sutreshen-Vestnik.zip) винаги дава новото.
+name: Mac installer
+
+on:
+  push:
+    branches: [main]
+    paths: ["installer/**", "app/**", "claude/**", "lite/**", "setup.py", "setup.sh", "start.sh", ".github/workflows/macos.yml"]
+    tags: ["v*"]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: .venv за списъка с темите
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install -q pyyaml
+
+      - name: Сборка
+        run: installer/build.sh
+
+      - name: Проверка на zip-а
+        run: |
+          unzip -l dist/Sutreshen-Vestnik.zip | tail -1
+          cd "$(mktemp -d)" && ditto -x -k "$GITHUB_WORKSPACE/dist/Sutreshen-Vestnik.zip" .
+          lipo -archs "Инсталирай Сутрешен вестник.app/Contents/MacOS/Installer"
+          codesign --verify --deep "Инсталирай Сутрешен вестник.app"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Sutreshen-Vestnik-mac
+          path: dist/Sutreshen-Vestnik.zip
+
+      - name: Към Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then TAG="$GITHUB_REF_NAME"
+          elif [ "$GITHUB_EVENT_NAME" = release ]; then TAG="${{ github.event.release.tag_name }}"
+          else TAG=$(gh release view --json tagName -q .tagName 2>/dev/null || true)
+          fi
+          if [ -z "$TAG" ]; then echo "Още няма Release, няма къде да кача."; exit 0; fi
+          # Ако Windows сборката още не е направила Release за този таг, чакам я до 20 минути.
+          for i in $(seq 40); do gh release view "$TAG" >/dev/null 2>&1 && break; sleep 30; done
+          gh release upload "$TAG" dist/Sutreshen-Vestnik.zip --clobber
+          echo "Качено в $TAG"
