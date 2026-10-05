@@ -108,5 +108,5 @@ jobs:
             gh release upload $env:TAG dist/Sutreshen-Vestnik-Setup.exe --clobber
           } else {
             gh release create $env:TAG dist/Sutreshen-Vestnik-Setup.exe --title "Сутрешен вестник $env:TAG" `
-              --notes "Инсталатор за Windows. Пусни Sutreshen-Vestnik-Setup.exe. Ако излезе „Windows protected your PC“, натисни More info → Run anyway. Инсталаторът за Mac се добавя към същия Release."
+              --notes 'Инсталатор за Windows. Пусни Sutreshen-Vestnik-Setup.exe. Ако излезе „Windows protected your PC“, натисни More info → Run anyway. Инсталаторът за Mac се добавя към същия Release.'
           }
