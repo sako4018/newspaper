@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сутрешен вестник</title>
+<meta name="description" content="Всяка сутрин готов вестник на твоя Mac: новини по твоите теми в Word документ.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6f1e7;
+    --ink: #1d1b18;
+    --muted: #6b645a;
+    --rule: #cfc6b5;
+    --accent: #9b1c1c;
+    --card: #fffdf8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #191714;
+      --ink: #eee8dc;
+      --muted: #a99f8f;
+      --rule: #3a352d;
+      --accent: #e0605a;
+      --card: #221f1b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #191714;
+    --ink: #eee8dc;
+    --muted: #a99f8f;
+    --rule: #3a352d;
+    --accent: #e0605a;
+    --card: #221f1b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 18px/1.6 "Source Serif 4", Georgia, serif;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+  header { text-align: center; padding: 36px 0 18px; border-bottom: 4px double var(--rule); }
+  .dateline { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  h1 {
+    font-family: "Playfair Display", Georgia, serif;
+    font-weight: 900;
+    font-size: clamp(44px, 10vw, 84px);
+    line-height: 1;
+    margin: 10px 0 8px;
+  }
+  .tagline { font-style: italic; color: var(--muted); margin: 0; }
+  .hero { text-align: center; padding: 34px 0 30px; border-bottom: 1px solid var(--rule); }
+  .hero p { max-width: 600px; margin: 0 auto 22px; }
+  .download {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 19px;
+    padding: 14px 30px;
+    border-radius: 6px;
+  }
+  .download:hover { filter: brightness(1.1); }
+  .small { font-size: 14px; color: var(--muted); margin-top: 12px; }
+  h2 {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 26px;
+    margin: 0 0 12px;
+    padding-top: 28px;
+  }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 36px; }
+  .cols > div { border-top: 1px solid var(--rule); }
+  @media (max-width: 680px) { .cols { grid-template-columns: 1fr; } }
+  ol { padding-left: 22px; }
+  li { margin-bottom: 10px; }
+  .note {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--accent);
+    padding: 14px 18px;
+    margin: 18px 0;
+    border-radius: 4px;
+  }
+  kbd, code {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 15px;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 0 5px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 16px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; }
+  footer { text-align: center; color: var(--muted); font-size: 14px; padding: 30px 0 40px; border-top: 4px double var(--rule); margin-top: 36px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="dateline">За Mac · безплатно · на български</div>
+    <h1>Сутрешен вестник</h1>
+    <p class="tagline">Новините, които те интересуват, готови всяка сутрин</p>
+  </header>
+
+  <section class="hero">
+    <p>Всяка сутрин програмата събира новини от БТА, Дневник, BBC, Guardian и още около 80 източника, подбира важното по твоите теми и го подрежда във вестник (Word документ) на твоя Desktop.</p>
+    <a class="download" href="https://github.com/sako4018/newspaper/releases/latest/download/Sutreshen-Vestnik.zip">Изтегли за Mac</a>
+    <div class="small">macOS 12 или по-нов · Apple Silicon и Intel · около 1 ГБ след инсталиране</div>
+  </section>
+
+  <div class="cols">
+    <div>
+      <h2>Инсталиране</h2>
+      <ol>
+        <li>Натисни <b>„Изтегли за Mac“</b>. Файлът отива в <b>Downloads</b>.</li>
+        <li>Отвори <code>Sutreshen-Vestnik.zip</code>. До него се появява <b>„Инсталирай Сутрешен вестник“</b>.</li>
+        <li>Пусни го с двоен клик. Първия път macOS ще го спре (виж отдолу).</li>
+        <li>В съветника избери версия, теми, град, час и печат и натискай <b>„Продължи“</b>.</li>
+        <li>Натисни <b>„Инсталирай“</b> и изчакай няколко минути.</li>
+        <li>Готово! Първият брой се прави веднага, а после всеки ден в избрания час.</li>
+      </ol>
+    </div>
+    <div>
+      <h2>Ако macOS го спре</h2>
+      <p>Програмата не е подписана при Apple, затова първия път се показва предупреждение. Така се пуска:</p>
+      <ol>
+        <li>В прозореца на macOS натисни <b>Done</b> (не „Move to Trash“).</li>
+        <li>Отвори <b>System Settings → Privacy &amp; Security</b>.</li>
+        <li>Слез най-долу. До „Инсталирай Сутрешен вестник“ натисни <b>Open Anyway</b> и въведи паролата си.</li>
+        <li>Натисни <b>Open Anyway</b> още веднъж. Това е само първия път.</li>
+      </ol>
+      <div class="note">Ако macOS поиска да инсталира „command line developer tools“, съгласи се. Оттам идва Python, на който работи вестникът. След това пусни съветника пак.</div>
+    </div>
+  </div>
+
+  <h2>Две версии</h2>
+  <table>
+    <tr><th>Версия</th><th>Какво прави</th><th>Какво трябва</th></tr>
+    <tr><td><b>Lite</b></td><td>Подбира по правила и превежда чуждите новини на български без интернет. Излизат няколко страници.</td><td>нищо допълнително</td></tr>
+    <tr><td><b>Claude</b></td><td>Claude обобщава, оценява и подрежда новините. Излиза една страница A4 с около 17 истории.</td><td><a href="https://claude.com/claude-code">Claude Code</a></td></tr>
+  </table>
+
+  <div class="cols">
+    <div>
+      <h2>После</h2>
+      <p>За смяна на темите, часа или печата отвори <b>„Сутрешен вестник – настройки“</b> от Applications (или през Spotlight). Новият избор важи от следващия брой.</p>
+      <p>Първия път macOS може да попита дали „Сутрешен вестник“ може да ползва Desktop. Отговори <b>Allow</b>, иначе вестникът няма къде да се сложи.</p>
+    </div>
+    <div>
+      <h2>Деинсталиране</h2>
+      <p>Отвори <b>„Сутрешен вестник – настройки“</b> и натисни <b>„Деинсталирай…“</b>. Ежедневното пускане спира, а програмата се изтрива. Вестниците на Desktop остават.</p>
+    </div>
+  </div>
+
+  <footer>
+    Кодът е в <a href="https://github.com/sako4018/newspaper">github.com/sako4018/newspaper</a>
+  </footer>
+</div>
+</body>
+</html>
