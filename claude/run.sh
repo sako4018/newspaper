@@ -17,7 +17,17 @@ if [ -n "$VESTNIK_DRY_RUN" ]; then
 fi
 # caffeinate -i не позволява на Mac-а да заспи, докато върви скриптът.
 if [ "$VERSION" = "claude" ]; then
-    exec caffeinate -i $PY vestnik.py --auto
+    caffeinate -i $PY vestnik.py --auto
+    CODE=$?
+    RESULT=latest.docx
 else
-    exec caffeinate -i $PY ../lite/lite.py --auto >> logs/lite.log 2>&1
+    caffeinate -i $PY ../lite/lite.py --auto >> logs/lite.log 2>&1
+    CODE=$?
+    RESULT=../lite/output/latest.docx
 fi
+# Печат само ако е включен в профила (print: true) и броят е направен успешно.
+PRINT=$(sed -n 's/^print:[[:space:]]*//p' "$PROFILE" 2>/dev/null | head -n 1 | tr -d "\"' \r")
+if [ "$CODE" -eq 0 ] && [ "$PRINT" = "true" ]; then
+    ./print.sh "$RESULT" >> logs/print.log 2>&1
+fi
+exit $CODE
