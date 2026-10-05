@@ -93,7 +93,7 @@ h1 { text-transform: uppercase; line-height: 1.05; }
 /* ---------- Ръчни детайли (само тези три) ---------- */
 .stamp {
   display: inline-block; border: 3px solid var(--accent); color: var(--accent); border-radius: 4px;
-  font: 700 21px var(--display); letter-spacing: .13em; padding: 3px 14px; transform: rotate(-7deg); opacity: .9;
+  font: 700 21px var(--display); letter-spacing: .13em; text-transform: uppercase; padding: 3px 14px; transform: rotate(-7deg); opacity: .9;
 }
 .note { display: inline-block; font: 700 26px/1.1 var(--hand); color: var(--accent); transform: rotate(-3deg); }
 .paper {
