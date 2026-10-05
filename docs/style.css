@@ -77,7 +77,7 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; margin: 0; }
 h1 { text-transform: uppercase; line-height: 1.05; }
 .btn {
   display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); background: transparent;
-  border: 2px solid var(--ink); padding: 12px 22px;
+  border: 2px solid var(--ink); padding: 12px 18px;
   font: 500 17px var(--display); letter-spacing: .07em; text-transform: uppercase;
   transition: transform .12s ease, box-shadow .12s ease;
 }
