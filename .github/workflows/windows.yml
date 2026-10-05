@@ -1,12 +1,14 @@
 # Прави инсталатора за Windows и го пробва на истински Windows: тихо инсталиране, проверка на
 # Python, .venv, профила и задачата в Task Scheduler, един брой Lite и деинсталиране.
-# При публикуван Release прикачва Sutreshen-Vestnik-Setup.exe към него.
+# При нов таг (например v1.0) след успешната проверка сам прави Release със Sutreshen-Vestnik-Setup.exe.
+# Ако Release вече съществува (направен на ръка), само прикачва файла към него.
 name: Windows installer
 
 on:
   push:
     branches: [main]
     paths: ["installer/windows/**", "app/**", "claude/**", "lite/**", ".github/workflows/windows.yml"]
+    tags: ["v*"]
   release:
     types: [published]
   workflow_dispatch:
@@ -95,8 +97,16 @@ jobs:
           if (Test-Path (Join-Path $app ".venv")) { throw "Папката на програмата остана" }
           Write-Output "Деинсталирано."
 
-      - name: Прикачане към Release
-        if: github.event_name == 'release'
+      - name: Release с инсталатора
+        if: github.ref_type == 'tag' || github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/Sutreshen-Vestnik-Setup.exe --clobber
+          TAG: ${{ github.ref_type == 'tag' && github.ref_name || github.event.release.tag_name }}
+        run: |
+          gh release view $env:TAG *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:TAG dist/Sutreshen-Vestnik-Setup.exe --clobber
+          } else {
+            gh release create $env:TAG dist/Sutreshen-Vestnik-Setup.exe --title "Сутрешен вестник $env:TAG" `
+              --notes "Инсталатор за Windows. Пусни Sutreshen-Vestnik-Setup.exe. Ако излезе „Windows protected your PC“, натисни More info → Run anyway. Инсталаторът за Mac се добавя към същия Release."
+          }
