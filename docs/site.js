@@ -17,6 +17,4 @@
   if (!btn) return;
   btn.classList.add("primary");
   buttons.insertBefore(btn, buttons.firstChild);
-  var hint = document.getElementById("hint");
-  if (hint) hint.hidden = false;
 })();
