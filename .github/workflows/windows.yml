@@ -18,6 +18,8 @@ jobs:
   build-and-test:
     runs-on: windows-latest
     timeout-minutes: 60
+    env:
+      PYTHONUTF8: "1"   # конзолата на Windows е cp1252 и print на кирилица иначе гърми
     defaults:
       run:
         shell: pwsh
