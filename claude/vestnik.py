@@ -38,7 +38,9 @@ LOGS = BASE / "logs"
 SECTIONS = ["България", "Армения", "Свят", "Технологии и AI", "Любопитно"]
 USER_AGENT = "Mozilla/5.0 (Macintosh) SutreshenVestnik/1.0"
 
-FONT = "PT Serif"   # шрифт, създаден за кирилица; има го на всеки Mac
+# Georgia има кирилица и я има на всеки Mac и Windows. С PT Serif (само на Mac)
+# Word на Windows слагаше чужд резервен шрифт и текстът ставаше нечетим.
+FONT = "Georgia"
 INK = RGBColor(0x1C, 0x1A, 0x17)
 ACCENT = RGBColor(0x8B, 0x1E, 0x1E)
 MUTED = RGBColor(0x6B, 0x64, 0x5A)
