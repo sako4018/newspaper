@@ -33,7 +33,7 @@ SetupLogging=yes
 Name: "bg"; MessagesFile: "compiler:Languages\Bulgarian.isl"
 
 [Messages]
-WelcomeLabel2=Този съветник ще инсталира „Сутрешен вестник“ на компютъра ти.%n%nВсяка сутрин програмата събира новини от БТА, Дневник, BBC, Guardian и още около 80 източника и ги подрежда в Word документ (.docx) на Desktop.%n%nТрябва ти интернет и около 1 ГБ свободно място. Ако няма Python, съветникът го инсталира сам.
+WelcomeLabel2=Този съветник ще инсталира „Сутрешен вестник“ на компютъра ти.%n%nВсяка сутрин програмата събира новини от БТА, Дневник, BBC, Guardian и още около 80 източника и ги подрежда в Word документ (.docx) в папка „Сутрешен вестник“ на Desktop.%n%nТрябва ти интернет и около 1 ГБ свободно място. Ако няма Python, съветникът го инсталира сам.
 
 [Files]
 Source: "..\..\app\*"; DestDir: "{app}\app"; Excludes: "__pycache__"; Flags: ignoreversion recursesubdirs
@@ -52,9 +52,9 @@ Type: files; Name: "{userprograms}\{#AppName} – направи брой сег
 [Icons]
 ; „Сутрешен вестник“ отваря приложението с настройки в браузъра (app/server.py). То спира само,
 ; когато страницата се затвори (--quit-when-idle), защото на Windows няма терминал с Ctrl+C.
-Name: "{userdesktop}\{#AppName}"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\app\server.py"" --quit-when-idle"; WorkingDir: "{app}\app"; IconFilename: "{app}\icon.ico"; Comment: "Теми, версия, час и брой сега"
+Name: "{userdesktop}\{#AppName} – настройки"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\app\server.py"" --quit-when-idle"; WorkingDir: "{app}\app"; IconFilename: "{app}\icon.ico"; Comment: "Теми, версия, час и брой сега"
 Name: "{userprograms}\{#AppName}\{#AppName}"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\app\server.py"" --quit-when-idle"; WorkingDir: "{app}\app"; IconFilename: "{app}\icon.ico"; Comment: "Теми, версия, час и брой сега"
-Name: "{userprograms}\{#AppName}\Направи брой сега"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\claude\run.py"""; WorkingDir: "{app}\claude"; IconFilename: "{app}\icon.ico"
+Name: "{userprograms}\{#AppName}\Направи брой сега"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\claude\run.py"" --force"; WorkingDir: "{app}\claude"; IconFilename: "{app}\icon.ico"
 Name: "{userprograms}\{#AppName}\Поправи инсталацията"; Filename: "{app}\Setup.exe"
 Name: "{userprograms}\{#AppName}\Деинсталирай"; Filename: "{uninstallexe}"
 
@@ -203,8 +203,8 @@ begin
         'Подробности има в ' + ExpandConstant('{app}\install.log') + '.' + #13#10 +
         'Пусни Start → „Сутрешен вестник“ → „Поправи инсталацията“, за да опиташ пак.'
     else
-      WizardForm.FinishedLabel.Caption := 'Готово! Всеки ден в ' + TimeValue + ' вестникът се прави сам и се появява на Desktop.' + #13#10#13#10 +
-        'Теми, версия и час сменяш от иконката „Сутрешен вестник“ на Desktop. Деинсталира се от Start → „Сутрешен вестник“ → „Деинсталирай“.';
+      WizardForm.FinishedLabel.Caption := 'Готово! Всеки ден в ' + TimeValue + ' вестникът се прави сам. Всеки брой се пази на Desktop в папка „Сутрешен вестник“.' + #13#10#13#10 +
+        'Теми, версия и час сменяш от иконката „Сутрешен вестник – настройки“ на Desktop (ако не ти трябва, изтрий я). Деинсталира се от Start → „Сутрешен вестник“ → „Деинсталирай“.';
   end;
 end;
 

@@ -2,6 +2,8 @@
 
 Чете версията от lite/profile.yaml (ключ version: claude или lite; по подразбиране Lite),
 записва ред в logs/schedule.log и пуска избраната версия с --auto.
+Допълнителните аргументи се подават нататък: „Направи брой сега“ пуска run.py --force,
+за да се прави нов брой и когато днешният вече го има.
 Със VESTNIK_DRY_RUN=1 само показва какво би пуснало.
 """
 
@@ -47,12 +49,13 @@ def main():
     keep_awake()
     py = sys.executable
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
+    extra = sys.argv[1:]
     if version == "claude":
-        code = subprocess.call([py, str(HERE / "vestnik.py"), "--auto"], cwd=str(HERE), env=env)
+        code = subprocess.call([py, str(HERE / "vestnik.py"), "--auto"] + extra, cwd=str(HERE), env=env)
         result = HERE / "latest.docx"
     else:
         with open(logs / "lite.log", "a", encoding="utf-8") as log:
-            code = subprocess.call([py, str(ROOT / "lite" / "lite.py"), "--auto"], cwd=str(HERE),
+            code = subprocess.call([py, str(ROOT / "lite" / "lite.py"), "--auto"] + extra, cwd=str(HERE),
                                    stdout=log, stderr=subprocess.STDOUT, env=env)
         result = ROOT / "lite" / "output" / "latest.docx"
     if code == 0 and profile_print():

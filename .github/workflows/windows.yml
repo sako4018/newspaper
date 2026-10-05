@@ -82,7 +82,7 @@ jobs:
           $start = Join-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs" "Сутрешен вестник"
           $desk = [Environment]::GetFolderPath("Desktop")
           $sh = New-Object -ComObject WScript.Shell
-          foreach ($l in (Join-Path $desk "Сутрешен вестник.lnk"), (Join-Path $start "Сутрешен вестник.lnk"),
+          foreach ($l in (Join-Path $desk "Сутрешен вестник – настройки.lnk"), (Join-Path $start "Сутрешен вестник.lnk"),
                          (Join-Path $start "Направи брой сега.lnk"), (Join-Path $start "Поправи инсталацията.lnk"),
                          (Join-Path $start "Деинсталирай.lnk")) {
             if (-not (Test-Path $l)) { throw "Липсва $l" }
@@ -96,7 +96,7 @@ jobs:
           trap { Write-Output "::error::$($_.Exception.Message)"; break }
           $app = Join-Path $env:LOCALAPPDATA "Сутрешен вестник"
           # Като двоен клик върху иконката на Desktop (тя отваря и браузър; тук това няма значение)
-          Start-Process (Join-Path ([Environment]::GetFolderPath("Desktop")) "Сутрешен вестник.lnk")
+          Start-Process (Join-Path ([Environment]::GetFolderPath("Desktop")) "Сутрешен вестник – настройки.lnk")
           $page = $null
           foreach ($i in 1..30) {
             try { $page = Invoke-WebRequest http://127.0.0.1:8765/ -UseBasicParsing; break } catch { Start-Sleep 1 }
@@ -116,6 +116,7 @@ jobs:
 
       - name: Пробен брой Lite (както го пуска задачата)
         run: |
+          trap { Write-Output "::error::$($_.Exception.Message)"; break }
           $app = Join-Path $env:LOCALAPPDATA "Сутрешен вестник"
           & (Join-Path $app ".venv\Scripts\python.exe") (Join-Path $app "claude\run.py")
           $code = $LASTEXITCODE
@@ -123,6 +124,13 @@ jobs:
           if ($code -ne 0) { throw "run.py върна код $code" }
           $doc = Get-Item (Join-Path $app "lite\output\latest.docx")
           Write-Output ("Брой: " + $doc.FullName + " (" + $doc.Length + " байта)")
+          # „Направи брой сега“ (--force): нов брой и когато днешният го има; всеки е отделен файл в архива
+          & (Join-Path $app ".venv\Scripts\python.exe") (Join-Path $app "claude\run.py") --force
+          if ($LASTEXITCODE -ne 0) { throw "run.py --force върна код $LASTEXITCODE" }
+          $arch = Join-Path ([Environment]::GetFolderPath("Desktop")) "Сутрешен вестник"
+          $files = @(Get-ChildItem $arch -Filter *.docx | Where-Object { $_.Name -match '^\d\d\.\d\d\.\d{4} \d\d\.\d\d( \(\d+\))?\.docx$' })
+          Write-Output ("::notice::Архив: " + (($files | ForEach-Object { $_.Name }) -join ' | '))
+          if ($files.Count -lt 2) { throw "В Desktop\Сутрешен вестник има $($files.Count) броя вместо 2" }
 
       - name: Деинсталиране
         run: |
@@ -131,7 +139,7 @@ jobs:
           Start-Sleep -Seconds 5
           if (Get-ScheduledTask -TaskName "Sutreshen Vestnik" -ErrorAction SilentlyContinue) { throw "Задачата остана" }
           if (Test-Path (Join-Path $app ".venv")) { throw "Папката на програмата остана" }
-          if (Test-Path (Join-Path ([Environment]::GetFolderPath("Desktop")) "Сутрешен вестник.lnk")) { throw "Иконката на Desktop остана" }
+          if (Test-Path (Join-Path ([Environment]::GetFolderPath("Desktop")) "Сутрешен вестник – настройки.lnk")) { throw "Иконката на Desktop остана" }
           Write-Output "Деинсталирано."
 
       - name: Release с инсталатора
