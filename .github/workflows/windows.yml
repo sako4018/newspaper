@@ -87,16 +87,16 @@ jobs:
                          (Join-Path $start "Деинсталирай.lnk")) {
             if (-not (Test-Path $l)) { throw "Липсва $l" }
             $k = $sh.CreateShortcut($l)
-            Write-Output ("{0} → {1} {2}" -f (Split-Path $l -Leaf), $k.TargetPath, $k.Arguments)
-            if (-not (Test-Path $k.TargetPath)) { throw "Пряк път към липсващ файл: $l" }
+            # TargetPath губи кирилицата от пътя, затова само се показва; истинската проба е в следващата стъпка
+            Write-Output ("::notice::{0} → {1} {2}" -f (Split-Path $l -Leaf), $k.TargetPath, $k.Arguments)
           }
 
       - name: Приложението с настройки (както го пуска иконката)
         run: |
           trap { Write-Output "::error::$($_.Exception.Message)"; break }
           $app = Join-Path $env:LOCALAPPDATA "Сутрешен вестник"
-          $p = Start-Process (Join-Path $app ".venv\Scripts\pythonw.exe") -PassThru -WorkingDirectory (Join-Path $app "app") `
-            -ArgumentList ('"' + (Join-Path $app "app\server.py") + '"'), '--quit-when-idle', '--no-browser'
+          # Като двоен клик върху иконката на Desktop (тя отваря и браузър; тук това няма значение)
+          Start-Process (Join-Path ([Environment]::GetFolderPath("Desktop")) "Сутрешен вестник.lnk")
           $page = $null
           foreach ($i in 1..30) {
             try { $page = Invoke-WebRequest http://127.0.0.1:8765/ -UseBasicParsing; break } catch { Start-Sleep 1 }
@@ -112,7 +112,7 @@ jobs:
           $at = ([datetime](Get-ScheduledTask -TaskName "Sutreshen Vestnik").Triggers[0].StartBoundary).ToString("HH:mm")
           Write-Output "Нов час от приложението: $($r.time), в Task Scheduler: $at"
           if ($r.time -ne "07:15" -or $at -ne "07:15") { throw "Смяната на часа от приложението не мина" }
-          Stop-Process -Id $p.Id -Force
+          Get-Process pythonw -ErrorAction SilentlyContinue | Stop-Process -Force
 
       - name: Пробен брой Lite (както го пуска задачата)
         run: |
