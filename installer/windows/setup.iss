@@ -25,6 +25,8 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=classic
 UninstallDisplayName={#AppName}
+UninstallDisplayIcon={app}\icon.ico
+SetupIconFile=icon.ico
 SetupLogging=yes
 
 [Languages]
@@ -38,15 +40,27 @@ Source: "..\..\app\*"; DestDir: "{app}\app"; Excludes: "__pycache__"; Flags: ign
 Source: "..\..\claude\*"; DestDir: "{app}\claude"; Excludes: "__pycache__,logs,newspapers,latest.docx"; Flags: ignoreversion recursesubdirs
 Source: "..\..\lite\*"; DestDir: "{app}\lite"; Excludes: "__pycache__,output,profile.yaml,profile.tmp"; Flags: ignoreversion recursesubdirs
 Source: "install.ps1"; DestDir: "{app}\installer\windows"; Flags: ignoreversion
-; Копие на самия инсталатор: с него се сменят настройките после
+Source: "icon.ico"; DestDir: "{app}"; Flags: ignoreversion
+; Копие на самия инсталатор: с него се поправя инсталацията, ако нещо се счупи
 Source: "{srcexe}"; DestDir: "{app}"; DestName: "Setup.exe"; Flags: external ignoreversion; Check: NotFromAppDir
 
+; Преките пътища от v1.0 (бяха направо в Start, без папка)
+[InstallDelete]
+Type: files; Name: "{userprograms}\{#AppName} – настройки.lnk"
+Type: files; Name: "{userprograms}\{#AppName} – направи брой сега.lnk"
+
 [Icons]
-Name: "{userprograms}\{#AppName} – настройки"; Filename: "{app}\Setup.exe"
-Name: "{userprograms}\{#AppName} – направи брой сега"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\claude\run.py"""; WorkingDir: "{app}\claude"
+; „Сутрешен вестник“ отваря приложението с настройки в браузъра (app/server.py). То спира само,
+; когато страницата се затвори (--quit-when-idle), защото на Windows няма терминал с Ctrl+C.
+Name: "{userdesktop}\{#AppName}"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\app\server.py"" --quit-when-idle"; WorkingDir: "{app}\app"; IconFilename: "{app}\icon.ico"; Comment: "Теми, версия, час и брой сега"
+Name: "{userprograms}\{#AppName}\{#AppName}"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\app\server.py"" --quit-when-idle"; WorkingDir: "{app}\app"; IconFilename: "{app}\icon.ico"; Comment: "Теми, версия, час и брой сега"
+Name: "{userprograms}\{#AppName}\Направи брой сега"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\claude\run.py"""; WorkingDir: "{app}\claude"; IconFilename: "{app}\icon.ico"
+Name: "{userprograms}\{#AppName}\Поправи инсталацията"; Filename: "{app}\Setup.exe"
+Name: "{userprograms}\{#AppName}\Деинсталирай"; Filename: "{uninstallexe}"
 
 [Run]
 Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\claude\run.py"""; WorkingDir: "{app}\claude"; Description: "Направи първия брой сега"; Flags: postinstall nowait skipifsilent; Check: InstallOk
+Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\app\server.py"" --quit-when-idle"; WorkingDir: "{app}\app"; Description: "Отвори настройките"; Flags: postinstall nowait skipifsilent unchecked; Check: InstallOk
 
 [UninstallRun]
 Filename: "powershell.exe"; Parameters: "-NoProfile -Command ""Unregister-ScheduledTask -TaskName 'Sutreshen Vestnik' -Confirm:$false"""; Flags: runhidden; RunOnceId: "RemoveTask"
@@ -187,10 +201,10 @@ begin
     if InstallFailed then
       WizardForm.FinishedLabel.Caption := 'Инсталирането не завърши: ' + FailMessage + #13#10#13#10 +
         'Подробности има в ' + ExpandConstant('{app}\install.log') + '.' + #13#10 +
-        'Пусни „Сутрешен вестник – настройки“ от Start, за да опиташ пак.'
+        'Пусни Start → „Сутрешен вестник“ → „Поправи инсталацията“, за да опиташ пак.'
     else
       WizardForm.FinishedLabel.Caption := 'Готово! Всеки ден в ' + TimeValue + ' вестникът се прави сам и се появява на Desktop.' + #13#10#13#10 +
-        'Настройките сменяш от Start → „Сутрешен вестник – настройки“. Деинсталира се от Settings → Apps.';
+        'Теми, версия и час сменяш от иконката „Сутрешен вестник“ на Desktop. Деинсталира се от Start → „Сутрешен вестник“ → „Деинсталирай“.';
   end;
 end;
 
