@@ -61,6 +61,11 @@ jobs:
 
       - name: Проверка на инсталацията
         run: |
+          # Грешката отива и в annotation: тя се вижда в API без вход, за разлика от лога.
+          trap { Write-Output "::error::$($_.Exception.Message)"; break }
+          $sm = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs"
+          Write-Output ("::notice::Start: " + ((Get-ChildItem $sm -Recurse -Filter *.lnk | ForEach-Object { $_.FullName.Substring($sm.Length) }) -join ' | '))
+          Write-Output ("::notice::Desktop " + [Environment]::GetFolderPath("Desktop") + ": " + ((Get-ChildItem ([Environment]::GetFolderPath("Desktop")), "$env:PUBLIC\Desktop" -Filter *.lnk -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }) -join ' | '))
           $app = Join-Path $env:LOCALAPPDATA "Сутрешен вестник"
           foreach ($f in ".venv\Scripts\python.exe", ".venv\Scripts\pythonw.exe", "Setup.exe", "lite\profile.yaml", "claude\run.py") {
             if (-not (Test-Path (Join-Path $app $f))) { throw "Липсва $f" }
@@ -88,6 +93,7 @@ jobs:
 
       - name: Приложението с настройки (както го пуска иконката)
         run: |
+          trap { Write-Output "::error::$($_.Exception.Message)"; break }
           $app = Join-Path $env:LOCALAPPDATA "Сутрешен вестник"
           $p = Start-Process (Join-Path $app ".venv\Scripts\pythonw.exe") -PassThru -WorkingDirectory (Join-Path $app "app") `
             -ArgumentList ('"' + (Join-Path $app "app\server.py") + '"'), '--quit-when-idle', '--no-browser'
