@@ -41,26 +41,25 @@ Source: "..\..\claude\*"; DestDir: "{app}\claude"; Excludes: "__pycache__,logs,n
 Source: "..\..\lite\*"; DestDir: "{app}\lite"; Excludes: "__pycache__,output,profile.yaml,profile.tmp"; Flags: ignoreversion recursesubdirs
 Source: "install.ps1"; DestDir: "{app}\installer\windows"; Flags: ignoreversion
 Source: "icon.ico"; DestDir: "{app}"; Flags: ignoreversion
-; Копие на самия инсталатор: с него се поправя инсталацията, ако нещо се счупи
+; Копие на самия инсталатор: той е и прозорецът за настройки (пуснат пак, започва с досегашния избор)
 Source: "{srcexe}"; DestDir: "{app}"; DestName: "Setup.exe"; Flags: external ignoreversion; Check: NotFromAppDir
 
-; Преките пътища от v1.0 (бяха направо в Start, без папка)
+; Преките пътища от по-стари версии
 [InstallDelete]
 Type: files; Name: "{userprograms}\{#AppName} – настройки.lnk"
 Type: files; Name: "{userprograms}\{#AppName} – направи брой сега.lnk"
+Type: files; Name: "{userprograms}\{#AppName}\{#AppName}.lnk"
+Type: files; Name: "{userprograms}\{#AppName}\Поправи инсталацията.lnk"
 
 [Icons]
-; „Сутрешен вестник“ отваря приложението с настройки в браузъра (app/server.py). То спира само,
-; когато страницата се затвори (--quit-when-idle), защото на Windows няма терминал с Ctrl+C.
-Name: "{userdesktop}\{#AppName} – настройки"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\app\server.py"" --quit-when-idle"; WorkingDir: "{app}\app"; IconFilename: "{app}\icon.ico"; Comment: "Теми, версия, час и брой сега"
-Name: "{userprograms}\{#AppName}\{#AppName}"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\app\server.py"" --quit-when-idle"; WorkingDir: "{app}\app"; IconFilename: "{app}\icon.ico"; Comment: "Теми, версия, час и брой сега"
+; Настройките са същият съветник „Напред >“ като при инсталирането (Setup.exe), попълнен с досегашния избор.
+Name: "{userdesktop}\{#AppName} – настройки"; Filename: "{app}\Setup.exe"; IconFilename: "{app}\icon.ico"; Comment: "Версия, теми, град, час и печат"
+Name: "{userprograms}\{#AppName}\{#AppName} – настройки"; Filename: "{app}\Setup.exe"; IconFilename: "{app}\icon.ico"; Comment: "Версия, теми, град, час и печат"
 Name: "{userprograms}\{#AppName}\Направи брой сега"; Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\claude\run.py"" --force"; WorkingDir: "{app}\claude"; IconFilename: "{app}\icon.ico"
-Name: "{userprograms}\{#AppName}\Поправи инсталацията"; Filename: "{app}\Setup.exe"
 Name: "{userprograms}\{#AppName}\Деинсталирай"; Filename: "{uninstallexe}"
 
 [Run]
 Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\claude\run.py"""; WorkingDir: "{app}\claude"; Description: "Направи първия брой сега"; Flags: postinstall nowait skipifsilent; Check: InstallOk
-Filename: "{app}\.venv\Scripts\pythonw.exe"; Parameters: """{app}\app\server.py"" --quit-when-idle"; WorkingDir: "{app}\app"; Description: "Отвори настройките"; Flags: postinstall nowait skipifsilent unchecked; Check: InstallOk
 
 [UninstallRun]
 Filename: "powershell.exe"; Parameters: "-NoProfile -Command ""Unregister-ScheduledTask -TaskName 'Sutreshen Vestnik' -Confirm:$false"""; Flags: runhidden; RunOnceId: "RemoveTask"
@@ -74,7 +73,7 @@ var
   OptionsPage: TInputQueryWizardPage;
   PrintBox: TNewCheckBox;
   TopicIds: TStringList;
-  InstallFailed: Boolean;
+  InstallFailed, WasInstalled: Boolean;
   FailMessage: String;
 
 #include "topics.isi"
@@ -88,6 +87,13 @@ end;
 function NotFromAppDir: Boolean;
 begin
   Result := CompareText(ExpandConstant('{srcexe}'), ExpandConstant('{app}\Setup.exe')) <> 0;
+end;
+
+{ Пуснат пак след инсталиране: това е смяна на настройките, не ново инсталиране.
+  Помни се в началото, защото след инсталирането данните вече са записани. }
+function IsChange: Boolean;
+begin
+  Result := WasInstalled;
 end;
 
 function InstallOk: Boolean;
@@ -153,6 +159,7 @@ var
   I: Integer;
 begin
   TopicIds := TStringList.Create;
+  WasInstalled := GetPreviousData('Version', '') <> '';
 
   VersionPage := CreateInputOptionPage(wpWelcome, 'Версия', 'Избери как да се подбират новините.',
     'Версията може да се смени по-късно от „Сутрешен вестник – настройки“.', True, False);
@@ -197,11 +204,18 @@ procedure CurPageChanged(CurPageID: Integer);
 begin
   if (CurPageID = OptionsPage.ID) and (Trim(OptionsPage.Values[1]) = '') then
     OptionsPage.Values[1] := IntToStr(DefaultCount);
+  if (CurPageID = wpReady) and IsChange then begin
+    WizardForm.PageNameLabel.Caption := 'Провери новите настройки';
+    WizardForm.PageDescriptionLabel.Caption := 'С „Назад“ се връщаш да смениш нещо.';
+    WizardForm.NextButton.Caption := 'Запази';
+  end;
   if CurPageID = wpFinished then begin
     if InstallFailed then
       WizardForm.FinishedLabel.Caption := 'Инсталирането не завърши: ' + FailMessage + #13#10#13#10 +
         'Подробности има в ' + ExpandConstant('{app}\install.log') + '.' + #13#10 +
-        'Пусни Start → „Сутрешен вестник“ → „Поправи инсталацията“, за да опиташ пак.'
+        'Пусни „Сутрешен вестник – настройки“ (на Desktop или в Start), за да опиташ пак.'
+    else if IsChange then
+      WizardForm.FinishedLabel.Caption := 'Настройките са записани. Новият избор важи от следващия брой, всеки ден в ' + TimeValue + '.'
     else
       WizardForm.FinishedLabel.Caption := 'Готово! Всеки ден в ' + TimeValue + ' вестникът се прави сам. Всеки брой се пази на Desktop в папка „Сутрешен вестник“.' + #13#10#13#10 +
         'Теми, версия и час сменяш от иконката „Сутрешен вестник – настройки“ на Desktop (ако не ти трябва, изтрий я). Деинсталира се от Start → „Сутрешен вестник“ → „Деинсталирай“.';

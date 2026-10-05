@@ -82,37 +82,30 @@ jobs:
           $start = Join-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs" "Сутрешен вестник"
           $desk = [Environment]::GetFolderPath("Desktop")
           $sh = New-Object -ComObject WScript.Shell
-          foreach ($l in (Join-Path $desk "Сутрешен вестник – настройки.lnk"), (Join-Path $start "Сутрешен вестник.lnk"),
-                         (Join-Path $start "Направи брой сега.lnk"), (Join-Path $start "Поправи инсталацията.lnk"),
-                         (Join-Path $start "Деинсталирай.lnk")) {
+          foreach ($l in (Join-Path $desk "Сутрешен вестник – настройки.lnk"), (Join-Path $start "Сутрешен вестник – настройки.lnk"),
+                         (Join-Path $start "Направи брой сега.lnk"), (Join-Path $start "Деинсталирай.lnk")) {
             if (-not (Test-Path $l)) { throw "Липсва $l" }
             $k = $sh.CreateShortcut($l)
             # TargetPath губи кирилицата от пътя, затова само се показва; истинската проба е в следващата стъпка
             Write-Output ("::notice::{0} → {1} {2}" -f (Split-Path $l -Leaf), $k.TargetPath, $k.Arguments)
           }
 
-      - name: Приложението с настройки (както го пуска иконката)
+      - name: Смяна на настройките (Setup.exe от иконката, пуснат пак)
         run: |
           trap { Write-Output "::error::$($_.Exception.Message)"; break }
           $app = Join-Path $env:LOCALAPPDATA "Сутрешен вестник"
-          # Като двоен клик върху иконката на Desktop (тя отваря и браузър; тук това няма значение)
-          Start-Process (Join-Path ([Environment]::GetFolderPath("Desktop")) "Сутрешен вестник – настройки.lnk")
-          $page = $null
-          foreach ($i in 1..30) {
-            try { $page = Invoke-WebRequest http://127.0.0.1:8765/ -UseBasicParsing; break } catch { Start-Sleep 1 }
+          # Иконката „Сутрешен вестник – настройки“ пуска {app}\Setup.exe. Без параметри съветникът трябва
+          # да започне с досегашния избор (Lite, bg и world, Пловдив, 06:30) и да не го загуби.
+          $p = Start-Process (Join-Path $app "Setup.exe") -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/LOG=change.log'
+          if ($p.ExitCode -ne 0) { Get-Content change.log -Tail 40; throw "Повторният Setup.exe върна код $($p.ExitCode)" }
+          $prof = Get-Content (Join-Path $app "lite\profile.yaml") -Encoding UTF8 -Raw
+          foreach ($want in "version: lite", "- bg", "- world", "06:30", "Пловдив") {
+            if (-not $prof.Contains($want)) { throw "След повторно пускане профилът няма '$want'" }
           }
-          if (-not $page) { throw "Приложението не отговаря на 127.0.0.1:8765" }
-          $token = [regex]::Match($page.Content, 'const TOKEN = "([^"]+)"').Groups[1].Value
-          $h = @{ "X-Token" = $token }
-          $s = Invoke-RestMethod http://127.0.0.1:8765/api/schedule -Headers $h
-          Write-Output ("График: включен={0}, час={1}" -f $s.enabled, $s.time)
-          if (-not $s.enabled -or $s.time -ne "06:30") { throw "Приложението не вижда графика в 06:30" }
-          $body = @{ on = $true; time = "07:15"; profile = @{ version = "lite"; topics = @("bg", "world") } } | ConvertTo-Json -Depth 4
-          $r = Invoke-RestMethod http://127.0.0.1:8765/api/schedule -Method Post -Headers $h -Body ([Text.Encoding]::UTF8.GetBytes($body)) -ContentType "application/json"
           $at = ([datetime](Get-ScheduledTask -TaskName "Sutreshen Vestnik").Triggers[0].StartBoundary).ToString("HH:mm")
-          Write-Output "Нов час от приложението: $($r.time), в Task Scheduler: $at"
-          if ($r.time -ne "07:15" -or $at -ne "07:15") { throw "Смяната на часа от приложението не мина" }
-          Get-Process pythonw -ErrorAction SilentlyContinue | Stop-Process -Force
+          if ($at -ne "06:30") { throw "След повторно пускане задачата е в $at" }
+          if (Select-String -Path change.log -Pattern "pip install" -Quiet) { Write-Output "::notice::Повторното пускане пак инсталира пакети" }
+          Write-Output "::notice::Повторното пускане запази избора (Lite, bg, world, Пловдив, 06:30)"
 
       - name: Пробен брой Lite (както го пуска задачата)
         run: |
