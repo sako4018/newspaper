@@ -128,15 +128,21 @@ h1 { text-transform: uppercase; line-height: 1.05; }
 .cols { display: grid; grid-template-columns: 1fr 1fr; }
 .card { padding: 0 34px 8px 0; }
 .card + .card { padding: 0 0 8px 34px; border-left: 1px solid var(--soft); }
-.card h3 { font-size: 30px; text-transform: uppercase; }
-.card .tag { margin: 2px 0 12px; font: 500 14px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
-.card ul { margin: 14px 0; padding-left: 20px; }
-.card li { margin: 4px 0; }
-.card .for { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--soft); font-style: italic; color: var(--muted); }
+.card h3 { font-size: 34px; text-transform: uppercase; }
+.card .tag { margin: 2px 0 14px; font: 500 14px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.card dl { margin: 0; }
+.card dl > div { display: grid; grid-template-columns: 84px 1fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--soft); }
+.card dt { font: 500 13px/1.9 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.card dd { margin: 0; }
 .topics { margin-top: 26px; padding-bottom: 36px; }
-.lede { margin: -8px 0 18px; max-width: 40em; }
-.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-.chips li { border: 1px solid var(--ink); padding: 4px 14px 3px; font: 500 15px var(--display); letter-spacing: .08em; text-transform: uppercase; }
+.lede { margin: -8px 0 20px; max-width: 40em; }
+.tgrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.tcard { display: flex; flex-direction: column; background: var(--sheet); border: 1px solid var(--soft); border-top: 3px solid var(--ink); padding: 12px 14px 12px; transition: transform .12s ease, box-shadow .12s ease; }
+.tcard:hover { transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--ink); }
+.tcard h3 { font-size: 20px; text-transform: uppercase; letter-spacing: .03em; }
+.tcard .about { margin: 2px 0 10px; font-size: 15px; line-height: 1.4; }
+.tcard .src { margin: auto 0 0; padding-top: 8px; border-top: 1px solid var(--soft); font-size: 13px; line-height: 1.45; color: var(--muted); }
+.tcard .src b { display: block; font: 500 11px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 1px; }
 
 /* ---------- Страници с инсталиране и въпроси ---------- */
 .page { max-width: 720px; margin: 0 auto; padding: 36px 0 24px; }
@@ -171,12 +177,16 @@ code { font: .85em ui-monospace, Menlo, Consolas, monospace; background: var(--s
   .showcase { padding: 42px 26px 8px; }
   .cols { grid-template-columns: 1fr; }
   .card { padding: 0 0 22px; }
-  .card + .card { padding: 22px 0 8px; border-left: 0; border-top: 1px solid var(--soft); }
+  .card + .card { padding: 22px 0 8px; border-left: 0; border-top: 4px double var(--ink); }
+  .tgrid { grid-template-columns: 1fr 1fr; }
   .btn { width: 100%; justify-content: center; }
   .buttons { width: 100%; }
   .tabs a { padding: 10px 11px 8px; font-size: 14px; letter-spacing: .1em; }
 }
+@media (max-width: 520px) {
+  .tgrid { grid-template-columns: 1fr; }
+}
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .btn { transition: none; }
+  .btn, .tcard { transition: none; }
 }
