@@ -31,7 +31,9 @@
 
 Инсталаторът за Windows е с Inno Setup (`installer/windows/`). Компилира се и се пробва на истински Windows в GitHub Actions (`.github/workflows/windows.yml`): тихо инсталиране, проверка на профила и задачата, един брой Lite и деинсталиране. Когато се публикува Release, `.exe` файлът се прикачва към него автоматично.
 
-**Как се прави инсталаторът за Mac:** `installer/build.sh` прави `dist/Sutreshen-Vestnik.zip`. Той се качва като Release в GitHub (Releases → Draft a new release → прикачи zip-а). Бутонът на страницата винаги сочи последния Release. Страницата е `docs/index.html` (GitHub Pages от клона `main`, папка `/docs`).
+**Как се прави инсталаторът за Mac:** `installer/build.sh` прави `dist/Sutreshen-Vestnik.zip`. Той се качва като Release в GitHub (Releases → Draft a new release → прикачи zip-а). Бутоните на сайта винаги сочат последния Release. Към същия Release се прикачва и `.exe` файлът за Windows: прави се сам от GitHub Actions, когато се пусне таг, например `v1.0`.
+
+**Сайтът** е в `docs/` (GitHub Pages от клона `main`, папка `/docs`): четири страници (`index.html`, `mac.html`, `windows.html`, `vaprosi.html`), общ `style.css` и `site.js`. Принципите на оформлението (шрифтове, цветове, ръчните детайли) са в [`STYLE.md`](STYLE.md).
 
 ## Ръчно: от кода (4 стъпки)
 
