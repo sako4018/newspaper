@@ -57,12 +57,7 @@ a { color: var(--accent); }
 .skip { position: absolute; left: -999px; top: 8px; background: var(--ink); color: var(--paper); padding: 8px 14px; z-index: 10; }
 .skip:focus { left: 8px; }
 
-/* ---------- Горна част: дата, име, раздели ---------- */
-.topline {
-  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-  padding: 10px 0; border-bottom: 1px solid var(--ink);
-  font: 500 12px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
-}
+/* ---------- Горна част: име, раздели ---------- */
 .masthead { text-align: center; padding: 20px 0 14px; border-bottom: 4px double var(--ink); }
 .masthead .name {
   display: inline-block; color: var(--ink); text-decoration: none;
@@ -152,10 +147,6 @@ ol.steps li::before {
 
 code { font: .85em ui-monospace, Menlo, Consolas, monospace; background: var(--sheet); border: 1px solid var(--soft); padding: 1px 6px; border-radius: 3px; overflow-wrap: anywhere; }
 
-footer {
-  margin-top: 36px; border-top: 4px double var(--ink); padding: 16px 0 40px;
-  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--muted);
-}
 
 /* ---------- Телефон ---------- */
 @media (max-width: 820px) {
@@ -165,7 +156,6 @@ footer {
   .btn { width: 100%; justify-content: center; }
   .buttons { width: 100%; }
   .tabs a { padding: 10px 11px 8px; font-size: 14px; letter-spacing: .1em; }
-  .topline { justify-content: center; text-align: center; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

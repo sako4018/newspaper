@@ -1,13 +1,5 @@
-// Дата в горния ред и познаване на системата. Сайтът работи и без този скрипт.
+// Познаване на системата. Сайтът работи и без този скрипт.
 (function () {
-  var today = document.getElementById("today");
-  if (today) {
-    try {
-      var d = new Date().toLocaleDateString("bg-BG", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-      today.textContent = d;
-    } catch (e) {}
-  }
-
   // На началната страница правилният бутон е червен и е първи
   var buttons = document.getElementById("buttons");
   if (!buttons) return;
