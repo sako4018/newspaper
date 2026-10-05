@@ -70,10 +70,12 @@
     </div>
   </main>
 
+  </div>
+
   <section class="versions" aria-labelledby="v-h">
-    <h2 id="v-h" class="section-title">Две версии</h2>
-    <div class="cols">
-      <article class="card">
+    <h2 id="v-h" class="sr-only">Две версии</h2>
+    <div class="side claude">
+      <div class="inner">
         <h3>Claude</h3>
         <p class="tag">Редакторът</p>
         <dl>
@@ -82,8 +84,10 @@
           <div><dt>Трябва</dt><dd>Claude Code</dd></div>
           <div><dt>Време</dt><dd>от минути до половин час</dd></div>
         </dl>
-      </article>
-      <article class="card">
+      </div>
+    </div>
+    <div class="side lite">
+      <div class="inner">
         <h3>Lite</h3>
         <p class="tag">Без Claude</p>
         <dl>
@@ -92,103 +96,140 @@
           <div><dt>Трябва</dt><dd>нищо допълнително</dd></div>
           <div><dt>Време</dt><dd>бързо (първият брой е по-бавен)</dd></div>
         </dl>
-      </article>
+      </div>
     </div>
   </section>
 
+  <div class="wrap">
   <section class="topics" aria-labelledby="t-h">
     <h2 id="t-h" class="section-title">Ти избираш темите</h2>
-    <p class="lede">18 теми, нищо не е избрано предварително. Важат и за двете версии.</p>
+    <p class="lede">18 теми, нищо не е избрано предварително. Посочи една, за да видиш източниците. Важат и за двете версии.</p>
     <ul class="tgrid">
-        <li class="tcard">
-          <h3>България</h3>
-          <p class="about">местни новини и политика</p>
-          <p class="src"><b>Източници</b> БТА · Дневник · Медиапул · Капитал · Actualno · Club Z</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>България</h3>
+            <p class="about">местни новини и политика</p>
+            <p class="src"><b>Източници</b>БТА · Дневник · Медиапул · Капитал · Actualno · Club Z</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Армения</h3>
-          <p class="about">новини от и за Армения, Кавказа</p>
-          <p class="src"><b>Източници</b> News.am · News.am RU · Asbarez · Hetq · Azatutyun · Aravot</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Армения</h3>
+            <p class="about">новини от и за Армения, Кавказа</p>
+            <p class="src"><b>Източници</b>News.am · News.am RU · Asbarez · Hetq · Azatutyun · Aravot</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Свят</h3>
-          <p class="about">международна политика и събития</p>
-          <p class="src"><b>Източници</b> BBC World · The Guardian · Al Jazeera · DW · Euronews · NYT World · France 24 · Politico EU · Bloomberg</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Свят</h3>
+            <p class="about">международна политика и събития</p>
+            <p class="src"><b>Източници</b>BBC World · The Guardian · Al Jazeera · DW · Euronews · NYT World · France 24 · Politico EU · Bloomberg</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Европа и ЕС</h3>
-          <p class="about">Брюксел, евро, европейска политика</p>
-          <p class="src"><b>Източници</b> Guardian Europe · Politico EU · France 24 Europe · BBC Europe</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Европа и ЕС</h3>
+            <p class="about">Брюксел, евро, европейска политика</p>
+            <p class="src"><b>Източници</b>Guardian Europe · Politico EU · France 24 Europe · BBC Europe</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Украйна и войната</h3>
-          <p class="about">събития и дипломация около войната</p>
-          <p class="src"><b>Източници</b> Ukrinform · Kyiv Post · Ukrainska Pravda EN · Kyiv Independent · Guardian Ukraine</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Украйна и войната</h3>
+            <p class="about">събития и дипломация около войната</p>
+            <p class="src"><b>Източници</b>Ukrinform · Kyiv Post · Ukrainska Pravda EN · Kyiv Independent · Guardian Ukraine</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Близък изток</h3>
-          <p class="about">Израел, Газа, Иран, Сирия, Персийския залив</p>
-          <p class="src"><b>Източници</b> Arab News · The National · Middle East Eye · Haaretz · Al-Monitor · Guardian Middle East · BBC Middle East</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Близък изток</h3>
+            <p class="about">Израел, Газа, Иран, Сирия, Персийския залив</p>
+            <p class="src"><b>Източници</b>Arab News · The National · Middle East Eye · Haaretz · Al-Monitor · Guardian Middle East · BBC Middle East</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Технологии и AI</h3>
-          <p class="about">изкуствен интелект, софтуер, устройства</p>
-          <p class="src"><b>Източници</b> Ars Technica · The Verge · TechCrunch · Wired · Techmeme · Kaldata · Tom&#x27;s Hardware</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Технологии и AI</h3>
+            <p class="about">изкуствен интелект, софтуер, устройства</p>
+            <p class="src"><b>Източници</b>Ars Technica · The Verge · TechCrunch · Wired · Techmeme · Kaldata · Tom&#x27;s Hardware</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Изкуствен интелект</h3>
-          <p class="about">модели, компании, регулации</p>
-          <p class="src"><b>Източници</b> The Decoder · TechCrunch AI · The Verge AI · Wired AI · Ars Technica AI</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Изкуствен интелект</h3>
+            <p class="about">модели, компании, регулации</p>
+            <p class="src"><b>Източници</b>The Decoder · TechCrunch AI · The Verge AI · Wired AI · Ars Technica AI</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Икономика и бизнес</h3>
-          <p class="about">пазари, компании, финанси</p>
-          <p class="src"><b>Източници</b> MarketWatch · BBC Business · Guardian Business · Investing.com · CNBC</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Икономика и бизнес</h3>
+            <p class="about">пазари, компании, финанси</p>
+            <p class="src"><b>Източници</b>MarketWatch · BBC Business · Guardian Business · Investing.com · CNBC</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Наука и космос</h3>
-          <p class="about">открития, космос, изследвания</p>
-          <p class="src"><b>Източници</b> Phys.org · ScienceDaily · BBC Science · NASA</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Наука и космос</h3>
+            <p class="about">открития, космос, изследвания</p>
+            <p class="src"><b>Източници</b>Phys.org · ScienceDaily · BBC Science · NASA</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Спорт</h3>
-          <p class="about">футбол, тенис и други</p>
-          <p class="src"><b>Източници</b> BBC Sport · ESPN · Sky Sports · Guardian Sport · Gong.bg</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Спорт</h3>
+            <p class="about">футбол, тенис и други</p>
+            <p class="src"><b>Източници</b>BBC Sport · ESPN · Sky Sports · Guardian Sport · Gong.bg</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Култура и кино</h3>
-          <p class="about">кино, музика, изкуство</p>
-          <p class="src"><b>Източници</b> Guardian Culture · BBC Arts · Variety</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Култура и кино</h3>
+            <p class="about">кино, музика, изкуство</p>
+            <p class="src"><b>Източници</b>Guardian Culture · BBC Arts · Variety</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Здраве</h3>
-          <p class="about">медицина и здравеопазване</p>
-          <p class="src"><b>Източници</b> BBC Health · Guardian Health · NPR Health · Medical Xpress · ScienceDaily Health</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Здраве</h3>
+            <p class="about">медицина и здравеопазване</p>
+            <p class="src"><b>Източници</b>BBC Health · Guardian Health · NPR Health · Medical Xpress · ScienceDaily Health</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Игри</h3>
-          <p class="about">видеоигри и гейминг</p>
-          <p class="src"><b>Източници</b> IGN · Polygon · PC Gamer · Eurogamer</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Игри</h3>
+            <p class="about">видеоигри и гейминг</p>
+            <p class="src"><b>Източници</b>IGN · Polygon · PC Gamer · Eurogamer</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Околна среда</h3>
-          <p class="about">климат и природа</p>
-          <p class="src"><b>Източници</b> Guardian Environment · BBC Science &amp; Env · Inside Climate News · Phys.org Earth</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Околна среда</h3>
+            <p class="about">климат и природа</p>
+            <p class="src"><b>Източници</b>Guardian Environment · BBC Science &amp; Env · Inside Climate News · Phys.org Earth</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Крипто</h3>
-          <p class="about">криптовалути и блокчейн</p>
-          <p class="src"><b>Източници</b> Cointelegraph · BeInCrypto · CryptoSlate · Decrypt</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Крипто</h3>
+            <p class="about">криптовалути и блокчейн</p>
+            <p class="src"><b>Източници</b>Cointelegraph · BeInCrypto · CryptoSlate · Decrypt</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Автомобили</h3>
-          <p class="about">нови коли и индустрия</p>
-          <p class="src"><b>Източници</b> Motor1 · Jalopnik · Carscoops</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Автомобили</h3>
+            <p class="about">нови коли и индустрия</p>
+            <p class="src"><b>Източници</b>Motor1 · Jalopnik · Carscoops</p>
+          </div>
         </li>
-        <li class="tcard">
-          <h3>Любопитно</h3>
-          <p class="about">необичайни и интересни истории</p>
-          <p class="src"><b>Източници</b> Mental Floss · Good News Network · Live Science · Atlas Obscura · Smithsonian · UPI Odd News</p>
+        <li class="tcard" tabindex="0">
+          <div class="pop">
+            <h3>Любопитно</h3>
+            <p class="about">необичайни и интересни истории</p>
+            <p class="src"><b>Източници</b>Mental Floss · Good News Network · Live Science · Atlas Obscura · Smithsonian · UPI Odd News</p>
+          </div>
         </li>
     </ul>
   </section>

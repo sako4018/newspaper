@@ -123,26 +123,39 @@ h1 { text-transform: uppercase; line-height: 1.05; }
 .showcase { padding-left: 36px; display: flex; align-items: center; justify-content: center; }
 
 /* ---------- Версии и теми (начало) ---------- */
-.versions, .topics { border-top: 4px double var(--ink); padding: 34px 0 10px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.versions { display: grid; grid-template-columns: 1fr 1fr; border-top: 4px double var(--ink); border-bottom: 4px double var(--ink); }
+.side { padding: 44px 40px 40px; }
+.side .inner { max-width: 500px; }
+.side.claude { background: var(--sheet); padding-left: max(16px, calc((100vw - 1040px) / 2 + 16px)); border-right: 1px solid var(--ink); }
+.side.lite { padding-right: max(16px, calc((100vw - 1040px) / 2 + 16px)); }
+.side h3 { font-size: clamp(40px, 6vw, 64px); line-height: 1; text-transform: uppercase; }
+.side .tag { margin: 6px 0 20px; font: 500 15px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.side dl { margin: 0; }
+.side dl > div { display: grid; grid-template-columns: 84px 1fr; gap: 12px; padding: 10px 0; border-top: 1px solid var(--soft); }
+.side dt { font: 500 13px/1.9 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.side dd { margin: 0; }
 .section-title { font-size: clamp(26px, 4vw, 36px); text-transform: uppercase; margin: 0 0 22px; }
-.cols { display: grid; grid-template-columns: 1fr 1fr; }
-.card { padding: 0 34px 8px 0; }
-.card + .card { padding: 0 0 8px 34px; border-left: 1px solid var(--soft); }
-.card h3 { font-size: 34px; text-transform: uppercase; }
-.card .tag { margin: 2px 0 14px; font: 500 14px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
-.card dl { margin: 0; }
-.card dl > div { display: grid; grid-template-columns: 84px 1fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--soft); }
-.card dt { font: 500 13px/1.9 var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-.card dd { margin: 0; }
-.topics { margin-top: 26px; padding-bottom: 36px; }
-.lede { margin: -8px 0 20px; max-width: 40em; }
-.tgrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.tcard { display: flex; flex-direction: column; background: var(--sheet); border: 1px solid var(--soft); border-top: 3px solid var(--ink); padding: 12px 14px 12px; transition: transform .12s ease, box-shadow .12s ease; }
-.tcard:hover { transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--ink); }
-.tcard h3 { font-size: 20px; text-transform: uppercase; letter-spacing: .03em; }
-.tcard .about { margin: 2px 0 10px; font-size: 15px; line-height: 1.4; }
-.tcard .src { margin: auto 0 0; padding-top: 8px; border-top: 1px solid var(--soft); font-size: 13px; line-height: 1.45; color: var(--muted); }
+.topics { padding: 34px 0 60px; }
+.lede { margin: -8px 0 22px; max-width: 40em; }
+.tgrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+.tcard { position: relative; height: 84px; outline: none; }
+.tcard .pop {
+  position: absolute; top: 0; left: 0; right: 0; min-height: 100%; background: var(--sheet);
+  border: 1px solid var(--soft); border-top: 3px solid var(--ink); padding: 11px 12px;
+  transform-origin: top center; transition: transform .18s ease, box-shadow .18s ease;
+}
+.tcard:nth-child(6n+1) .pop { transform-origin: top left; }
+.tcard:nth-child(6n) .pop { transform-origin: top right; }
+.tcard h3 { font-size: 17px; line-height: 1.15; text-transform: uppercase; letter-spacing: .03em; }
+.tcard .about, .tcard .src { display: none; }
+.tcard .about { margin: 4px 0 8px; font-size: 14px; line-height: 1.35; }
+.tcard .src { margin: 0; padding-top: 8px; border-top: 1px solid var(--soft); font-size: 13px; line-height: 1.45; color: var(--muted); }
 .tcard .src b { display: block; font: 500 11px var(--display); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 1px; }
+.tcard:hover, .tcard:focus-within { z-index: 5; }
+.tcard:hover .pop, .tcard:focus-within .pop { transform: scale(1.1); box-shadow: 4px 4px 0 var(--ink); }
+.tcard:hover .about, .tcard:hover .src, .tcard:focus-within .about, .tcard:focus-within .src { display: block; }
+.tcard:focus-visible .pop { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* ---------- Страници с инсталиране и въпроси ---------- */
 .page { max-width: 720px; margin: 0 auto; padding: 36px 0 24px; }
@@ -175,18 +188,35 @@ code { font: .85em ui-monospace, Menlo, Consolas, monospace; background: var(--s
   .front { grid-template-columns: 1fr; padding-top: 28px; }
   .lead { padding-right: 0; border-right: 0; padding-bottom: 38px; border-bottom: 1px solid var(--soft); }
   .showcase { padding: 42px 26px 8px; }
-  .cols { grid-template-columns: 1fr; }
-  .card { padding: 0 0 22px; }
-  .card + .card { padding: 22px 0 8px; border-left: 0; border-top: 4px double var(--ink); }
-  .tgrid { grid-template-columns: 1fr 1fr; }
   .btn { width: 100%; justify-content: center; }
   .buttons { width: 100%; }
   .tabs a { padding: 10px 11px 8px; font-size: 14px; letter-spacing: .1em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .btn, .tcard { transition: none; }
+}
+
+@media (max-width: 1000px) {
+  .tgrid { grid-template-columns: repeat(3, 1fr); }
+  .tcard:nth-child(6n+1) .pop, .tcard:nth-child(6n) .pop { transform-origin: top center; }
+  .tcard:nth-child(3n+1) .pop { transform-origin: top left; }
+  .tcard:nth-child(3n) .pop { transform-origin: top right; }
+}
+@media (max-width: 820px) {
+  .versions { grid-template-columns: 1fr; }
+  .side, .side.claude, .side.lite { padding: 34px 16px 30px; }
+  .side.claude { border-right: 0; border-bottom: 4px double var(--ink); }
+}
+@media (hover: none), (max-width: 520px) {
+  .tgrid { grid-template-columns: 1fr 1fr; }
+  .tcard { height: auto; }
+  .tcard .pop, .tcard:nth-child(n) .pop { position: static; height: 100%; transform: none !important; box-shadow: none !important; }
+  .tcard .about, .tcard .src { display: block; }
 }
 @media (max-width: 520px) {
   .tgrid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .btn, .tcard { transition: none; }
+  .tcard .pop { transition: none; }
 }
