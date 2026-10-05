@@ -149,6 +149,7 @@
   <section id="sched" hidden>
     <h2>6 · Всяка сутрин</h2>
     <p class="hint" id="schedtext"></p>
+    <p id="schedtimewrap" hidden><label>Час: <input type="time" id="schedtime" required></label></p>
     <div class="actions"><button type="button" id="schedbtn"></button></div>
   </section>
 
@@ -422,6 +423,8 @@ async function init() {
   const s = await api("/api/status");
   if (s.state === "running") startPolling();
   else if (s.state !== "idle") renderPanel(s);
+  // „Тук съм“ за сървъра: пуснат от иконката, той спира сам, когато страницата е затворена.
+  setInterval(() => api("/api/status").catch(() => {}), 30000);
 }
 
 $("citygo").addEventListener("click", searchCity);
@@ -431,17 +434,24 @@ async function refreshSchedule() {
   $("sched").hidden = !s.supported;
   if (!s.supported) return;
   state.sched = s.enabled;
+  const at = s.time || "06:00";
+  $("schedtimewrap").hidden = !s.time;   // часът се сменя оттук само където системата го позволява (Windows)
+  if (s.time && document.activeElement !== $("schedtime")) $("schedtime").value = s.time;
   $("schedtext").textContent = s.enabled
-    ? "Включено: избраната версия и теми се зареждат всеки ден в 06:00 (ако Mac-ът спи, при събуждане)."
-    : "Изключено. Натисни, за да се зарежда избраната версия с избраните теми всеки ден в 06:00.";
+    ? "Включено: избраната версия и теми се зареждат всеки ден в " + at + " (ако компютърът спи, при събуждане)."
+    : "Изключено. Натисни, за да се зарежда избраната версия с избраните теми всеки ден в " + at + ".";
   $("schedbtn").textContent = s.enabled ? "Изключи ежедневното пускане" : "Запази и включи всяка сутрин";
 }
-async function toggleSchedule() {
+async function setSchedule(on) {
   say("");
-  try { await api("/api/schedule", {on: !state.sched, profile: collect()}); await refreshSchedule(); say(state.sched ? "Графикът е включен." : "Графикът е изключен."); }
+  const body = {on, profile: collect()};
+  if (!$("schedtimewrap").hidden && $("schedtime").value) body.time = $("schedtime").value;
+  try { await api("/api/schedule", body); await refreshSchedule(); say(state.sched ? "Графикът е включен за " + ($("schedtime").value || "06:00") + "." : "Графикът е изключен."); }
   catch (e) { say(e.message); }
 }
-$("schedbtn").addEventListener("click", toggleSchedule);
+$("schedbtn").addEventListener("click", () => setSchedule(!state.sched));
+// При включен график новият час се записва веднага.
+$("schedtime").addEventListener("change", () => { if (state.sched && $("schedtime").value) setSchedule(true); });
 $("run").addEventListener("click", run);
 $("save").addEventListener("click", save);
 init().catch((e) => { document.body.prepend(el("p", {textContent: "Не мога да заредя: " + e.message, style: "padding:16px;color:#b00"})); });

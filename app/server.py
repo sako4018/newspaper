@@ -188,7 +188,8 @@ def start_job(version):
         proc = subprocess.Popen(cmd, cwd=str(cfg["cwd"]), stdin=subprocess.DEVNULL,
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                 encoding="utf-8", errors="replace", bufsize=1,
-                                env=dict(os.environ, PYTHONIOENCODING="utf-8"))
+                                env=dict(os.environ, PYTHONIOENCODING="utf-8"),
+                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))   # Windows: без черен прозорец
     except OSError as e:
         with JOB.lock:
             JOB.state, JOB.error, JOB.finished = "error", "Не мога да пусна програмата: {}".format(e), time.time()
@@ -277,6 +278,7 @@ class Handler(BaseHTTPRequestHandler):
 
     # --- GET ---
     def do_GET(self):
+        self.server.last_seen = time.time()
         url = urllib.parse.urlparse(self.path)
         query = urllib.parse.parse_qs(url.query)
         route = url.path
@@ -293,7 +295,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, JOB.snapshot())
         if route == "/api/schedule":
             return self.reply(200, {"supported": platform_support.schedule_supported(),
-                                    "enabled": platform_support.schedule_enabled()})
+                                    "enabled": platform_support.schedule_enabled(),
+                                    "time": platform_support.schedule_time()})
         if route == "/api/geocode":
             name = query.get("q", [""])[0].strip()
             if len(name) < 2:
@@ -327,6 +330,7 @@ class Handler(BaseHTTPRequestHandler):
 
     # --- POST ---
     def do_POST(self):
+        self.server.last_seen = time.time()
         url = urllib.parse.urlparse(self.path)
         if not self.guard(urllib.parse.parse_qs(url.query), post=True):
             return
@@ -347,10 +351,18 @@ class Handler(BaseHTTPRequestHandler):
                     return self.error(409, "Ежедневното пускане още не е готово за тази система.")
                 on = bool(data.get("on"))
                 if on:
-                    save_profile(validate_profile(data.get("profile") or {}, ids))
+                    profile = validate_profile(data.get("profile") or {}, ids)
+                    at = data.get("time")
+                    if at is not None and platform_support.schedule_time() is not None:
+                        m = re.fullmatch(r"(\d{1,2}):(\d{2})", str(at))
+                        if not m or int(m.group(1)) > 23 or int(m.group(2)) > 59:
+                            raise ValueError("Часът е невалиден.")
+                        profile["schedule_time"] = "{:02d}:{}".format(int(m.group(1)), m.group(2))
+                    save_profile(profile)
                 if not platform_support.schedule_set(on):
                     return self.error(500, "Не успях да {} графика.".format("включа" if on else "изключа"))
-                return self.reply(200, {"supported": True, "enabled": platform_support.schedule_enabled()})
+                return self.reply(200, {"supported": True, "enabled": platform_support.schedule_enabled(),
+                                        "time": platform_support.schedule_time()})
             if url.path == "/api/open":
                 version = data.get("version")
                 if version not in VERSIONS or not VERSIONS[version]["result"].exists():
@@ -366,6 +378,20 @@ class Handler(BaseHTTPRequestHandler):
 
 class App(ThreadingHTTPServer):
     daemon_threads = True
+    # На Windows SO_REUSEADDR позволява втори сървър на зает порт; там търсим наистина свободен.
+    allow_reuse_address = sys.platform != "win32"
+
+
+IDLE_QUIT = 150   # секунди без заявка от страницата (тя се обажда на 30 s; скрит таб в Chrome – на 60 s)
+
+
+def quit_when_idle(srv):
+    """За иконката на Windows: няма терминал с Ctrl+C, затова сървърът спира сам след затваряне на страницата."""
+    while True:
+        time.sleep(10)
+        if time.time() - srv.last_seen > IDLE_QUIT and JOB.snapshot()["state"] != "running":
+            srv.shutdown()
+            return
 
 
 def make_server():
@@ -388,6 +414,9 @@ def main():
     print("Спиране: Ctrl+C")
     if "--no-browser" not in sys.argv:
         threading.Timer(0.5, lambda: webbrowser.open(url)).start()
+    srv.last_seen = time.time()
+    if "--quit-when-idle" in sys.argv:
+        threading.Thread(target=quit_when_idle, args=(srv,), daemon=True).start()
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

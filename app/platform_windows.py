@@ -65,6 +65,10 @@ def schedule_enabled():
     return _powershell("Get-ScheduledTask -TaskName {} -ErrorAction Stop".format(_q(TASK))).returncode == 0
 
 
+def schedule_time():
+    return _schedule_time()
+
+
 def _schedule_time():
     """Часът от профила (schedule_time: "06:30"); ако го няма, 06:00."""
     try:

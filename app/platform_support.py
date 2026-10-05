@@ -53,6 +53,13 @@ def schedule_enabled():
     return bool(schedule_supported() and _impl.schedule_enabled())
 
 
+def schedule_time():
+    """Часът на ежедневното пускане ("06:30"), ако системата позволява да се сменя; иначе None."""
+    if not (schedule_supported() and hasattr(_impl, "schedule_time")):
+        return None
+    return _impl.schedule_time()
+
+
 def schedule_set(on):
     """Включва или изключва ежедневното пускане. Връща True при успех."""
     if not schedule_supported():
