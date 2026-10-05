@@ -11,3 +11,4 @@ lite/profile.yaml
 
 # Инсталатор
 dist/
+installer/windows/topics.isi
