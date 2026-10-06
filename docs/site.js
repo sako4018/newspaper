@@ -1,4 +1,18 @@
-// Познаване на системата. Сайтът работи и без този скрипт.
+// Познаване на системата и версията под бутоните. Сайтът работи и без този скрипт.
+
+// Версията: в HTML е написана на ръка, тук се взима от последния Release (това, което бутоните теглят)
+(function () {
+  var spots = document.querySelectorAll("[data-ver]");
+  if (!spots.length || !window.fetch) return;
+  fetch("https://api.github.com/repos/sako4018/newspaper/releases/latest")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d || !/^v\d+(\.\d+)*$/.test(d.tag_name || "")) return;
+      for (var i = 0; i < spots.length; i++) spots[i].textContent = d.tag_name;
+    })
+    .catch(function () {});
+})();
+
 (function () {
   // На началната страница правилният бутон е червен и е първи
   var buttons = document.getElementById("buttons");

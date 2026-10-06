@@ -119,6 +119,9 @@ h1 { line-height: 1.05; }
 .lead .sub { font-size: 20px; margin: 0 0 26px; max-width: 30em; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
 .buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+/* Версията под бутоните; site.js я сверява с последния Release */
+.ver { margin: 10px 0 0; font: 500 13px var(--display); letter-spacing: .08em; color: var(--muted); }
+.buttons .ver { flex-basis: 100%; margin: 0; }
 .showcase { padding-left: 36px; display: flex; align-items: center; justify-content: center; }
 
 /* ---------- Версии и теми (начало) ---------- */
