@@ -53,9 +53,16 @@ def main():
         return
     with open(sys.argv[1], encoding="utf-8-sig") as f:   # -sig: инсталаторът за Windows пише с BOM
         data = json.load(f)
-    if data.get("city_name"):
-        data["city"] = find_city(data["city_name"])
     profile = load()
+    if data.get("city_name"):
+        name = data["city_name"].strip()
+        old = profile.get("city") or {}
+        # Същият град като досега (съветникът показва само името): без ново търсене, за да не се
+        # изгуби при лоша връзка. Нов град, който не се намери, не трие стария.
+        if old.get("name", "").casefold().startswith(name.casefold()):
+            data["city"] = old
+        else:
+            data["city"] = find_city(name) or old or None
     for key in KEYS:
         if key in data:
             profile[key] = data[key]
