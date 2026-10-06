@@ -2,6 +2,10 @@
 // „Назад“ и „Продължи“ долу). Програмата на вестника е в Contents/Resources/payload и се копира в
 // ~/Library/Application Support/Сутрешен вестник. Същото приложение после служи за смяна на настройките.
 // Строи се от installer/build.sh.
+//
+// Тих режим (за проверките в GitHub Actions), без прозорец; започва от досегашния избор:
+//   Installer --silent [--version lite|claude] [--topics bg,world] [--city Пловдив] [--time 06:30] [--print 0|1]
+//   Installer --silent --uninstall
 
 import AppKit
 
@@ -31,6 +35,7 @@ class Choices {
     var version = "lite"
     var topics: [String] = []
     var city: City? = nil
+    var cityName: String? = nil   // само име (тих режим); търси се от app/apply_settings.py
     var storiesPerTopic = 4
     var maxStories = 17
     var hour = 6
@@ -134,6 +139,7 @@ class Wizard: NSObject, NSWindowDelegate {
     let choices = Choices()
     var topics: [Topic] = []
     let wasInstalled = isInstalled()
+    let silent: Bool
 
     // елементи, чиито стойности се четат
     var topicBoxes: [NSButton] = []
@@ -148,10 +154,16 @@ class Wizard: NSObject, NSWindowDelegate {
     var statusLabel = NSTextField()
     var detailLabel = NSTextField()
 
-    override init() {
+    init(silent: Bool = false) {
+        self.silent = silent
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 640, height: 450),
                           styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
         super.init()
+        if silent {
+            loadTopics()
+            loadSavedChoices()
+            return
+        }
         window.title = wasInstalled ? "Настройки на „Сутрешен вестник“" : "Инсталиране на „Сутрешен вестник“"
         window.delegate = self
         loadTopics()
@@ -565,6 +577,7 @@ class Wizard: NSObject, NSWindowDelegate {
     // ---------- Инсталиране (върви във фонов поток) ----------
 
     func status(_ text: String, _ value: Double) {
+        if silent { print(text); return }
         DispatchQueue.main.async {
             self.statusLabel.stringValue = text
             self.progress.doubleValue = value
@@ -573,6 +586,7 @@ class Wizard: NSObject, NSWindowDelegate {
     }
 
     func detail(_ text: String) {
+        if silent { print("   " + text); return }
         DispatchQueue.main.async { self.detailLabel.stringValue = String(text.prefix(300)) }
     }
 
@@ -636,7 +650,9 @@ class Wizard: NSObject, NSWindowDelegate {
             "schedule_time": String(format: "%02d:%02d", c.hour, c.minute),
             "print": c.print,
         ]
-        if let city = c.city {
+        if let name = c.cityName {
+            settings["city_name"] = name
+        } else if let city = c.city {
             settings["city"] = ["name": city.name, "lat": city.lat, "lon": city.lon]
         } else {
             settings["city"] = NSNull()
@@ -685,6 +701,61 @@ class Wizard: NSObject, NSWindowDelegate {
 
     // ---------- Деинсталиране ----------
 
+    func removeEverything() {
+        run("/bin/bash", [installDir.appendingPathComponent("claude/uninstall.sh").path])
+        try? fm.removeItem(at: installDir)
+        try? fm.removeItem(at: settingsApp)
+        try? fm.removeItem(at: desktopIcon)
+    }
+
+    // ---------- Тих режим ----------
+
+    /// Чете аргументите, инсталира (или деинсталира) без прозорец и връща кода на изход.
+    func runSilent(_ args: [String]) -> Int32 {
+        var i = 0
+        func value() -> String? { i += 1; return i < args.count ? args[i] : nil }
+        var uninstall = false
+        while i < args.count {
+            switch args[i] {
+            case "--silent": break
+            case "--uninstall": uninstall = true
+            case "--version":
+                guard let v = value(), v == "lite" || v == "claude" else { print("--version е lite или claude"); return 2 }
+                choices.version = v
+            case "--topics":
+                guard let v = value() else { return 2 }
+                choices.topics = v.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
+            case "--city":
+                guard let v = value() else { return 2 }
+                choices.cityName = v
+            case "--time":
+                let parts = (value() ?? "").split(separator: ":").compactMap { Int($0) }
+                guard parts.count == 2, (0...23).contains(parts[0]), (0...59).contains(parts[1]) else {
+                    print("--time е ЧЧ:ММ"); return 2
+                }
+                choices.hour = parts[0]; choices.minute = parts[1]
+            case "--print": choices.print = value() == "1"
+            default:
+                print("Непознат аргумент: \(args[i])"); return 2
+            }
+            i += 1
+        }
+        if uninstall {
+            removeEverything()
+            print("Деинсталирано.")
+            return 0
+        }
+        let known = Set(topics.map { $0.id })
+        choices.topics = choices.topics.filter { known.contains($0) }
+        if choices.topics.isEmpty { print("Няма избрани теми (--topics)."); return 2 }
+        if let error = installSteps(choices) {
+            print("ГРЕШКА: " + error)
+            return 1
+        }
+        print(wasInstalled ? "Настройките са записани." : "Инсталирано.")
+        return 0
+    }
+
     @objc func uninstall() {
         let a = NSAlert()
         a.messageText = "Да деинсталирам ли „Сутрешен вестник“?"
@@ -693,10 +764,7 @@ class Wizard: NSObject, NSWindowDelegate {
         a.addButton(withTitle: "Деинсталирай")
         a.addButton(withTitle: "Отказ")
         guard a.runModal() == .alertFirstButtonReturn else { return }
-        run("/bin/bash", [installDir.appendingPathComponent("claude/uninstall.sh").path])
-        try? fm.removeItem(at: installDir)
-        try? fm.removeItem(at: settingsApp)
-        try? fm.removeItem(at: desktopIcon)
+        removeEverything()
         let done = NSAlert()
         done.messageText = "„Сутрешен вестник“ е деинсталиран."
         done.runModal()
@@ -710,6 +778,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var wizard: Wizard?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        let args = Array(CommandLine.arguments.dropFirst())
+        if args.contains("--silent") {
+            NSApp.setActivationPolicy(.prohibited)
+            setvbuf(stdout, nil, _IOLBF, 0)   // редовете излизат веднага в лога на проверката
+            exit(Wizard(silent: true).runSilent(args))
+        }
         buildMenu()
         wizard = Wizard()
         NSApp.activate(ignoringOtherApps: true)
