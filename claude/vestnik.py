@@ -308,7 +308,9 @@ def summarize(items, settings, config):
     for attempt in (1, 2, 3):
         try:
             log.info("Claude обобщава %d новини (опит %d)...", len(items), attempt)
-            proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
+            # encoding изрично: с text=True Windows ползва cp1252 и кирилицата в промпта гърми
+            # (вижда се само под Task Scheduler, където няма PYTHONUTF8).
+            proc = subprocess.run(cmd, input=prompt, capture_output=True, encoding="utf-8", errors="replace",
                                   timeout=900, cwd=tempfile.gettempdir())
             if proc.returncode != 0:
                 # В stdout е JSON, чиято статистика е в началото. Грешката е в "result".
