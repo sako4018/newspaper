@@ -6,7 +6,7 @@
 ; Тих режим (за проверка): Setup.exe /VERYSILENT /version=lite /topics=bg,world /city=Пловдив /time=06:30 /print=0
 
 #define AppName "Сутрешен вестник"
-#define AppVersion "1.0.3"
+#define AppVersion "1.0.4"
 
 [Setup]
 AppId={{8C1F6B2E-5A7D-4E3B-9F21-6D0C4B7A9E13}
