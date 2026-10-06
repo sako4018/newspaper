@@ -1,7 +1,7 @@
 # Проверка на инсталатора за Windows от .exe до готов брой, както при човек:
 #   pwsh tests/windows_install_test.ps1 -Exe <Sutreshen-Vestnik-Setup.exe> -Version <lite|claude>
 # 1. тихо инсталиране; файлове, профил, задача в Task Scheduler, иконки;
-# 2. брой през самата задача (Start-ScheduledTask), иначе като нея (run.py); копие в Desktop\Сутрешен вестник;
+# 2. брой през самата задача (Start-ScheduledTask), както всяка сутрин; копие в Desktop\Сутрешен вестник;
 # 3. „Направи брой сега“ (run.py --force) дава втори отделен файл;
 # 4. повторно пускане на {app}\Setup.exe (иконката за настройки) пази избора;
 # 5. деинсталиране без следи.
@@ -12,6 +12,8 @@ $ErrorActionPreference = "Stop"
 $Tag = "[windows $Version]"
 trap { Write-Output "::error::$Tag $($_.Exception.Message)"; exit 1 }
 function Note($text) { Write-Output "::notice::$Tag $text" }
+# Като на нормален Windows: без UTF-8 режима на Python, който workflow-ът слага (иначе крие грешки с кодировката).
+Remove-Item Env:PYTHONUTF8 -ErrorAction SilentlyContinue
 
 $App = Join-Path $env:LOCALAPPDATA "Сутрешен вестник"
 $Desk = [Environment]::GetFolderPath("Desktop")
@@ -67,12 +69,13 @@ foreach ($i in 1..120) {   # до 20 минути
 if ($fromTask) {
     Note "задачата в Task Scheduler направи брой: $((Get-Item $result).Length) байта"
 } else {
-    Write-Output "::warning::$Tag задачата не направи брой за 20 минути (LastTaskResult $((Get-ScheduledTaskInfo -TaskName 'Sutreshen Vestnik').LastTaskResult)); пускам run.py като нея"
-    & $Python (Join-Path $App "claude\run.py")
-    if ($LASTEXITCODE -ne 0) {
-        Get-Content (Join-Path $App "claude\logs\*.log") -Encoding UTF8 -Tail 20 -ErrorAction SilentlyContinue
-        throw "run.py върна код $LASTEXITCODE"
+    Write-Output "::error::$Tag задачата не направи брой за 20 минути (LastTaskResult $((Get-ScheduledTaskInfo -TaskName 'Sutreshen Vestnik').LastTaskResult))"
+    foreach ($log in "schedule.log", "vestnik.log", "lite.log") {
+        $lines = Get-Content (Join-Path $App "claude\logs\$log") -Encoding UTF8 -Tail 6 -ErrorAction SilentlyContinue |
+                 Where-Object { $_ -notmatch "INFO OK|ГРЕШКА .*http" }
+        if ($lines) { Write-Output ("::warning::$Tag $log от задачата: " + (($lines | ForEach-Object { $_.Trim() }) -join " ¦ ")) }
     }
+    throw "задачата в Task Scheduler не направи брой"
 }
 Start-Sleep 3
 

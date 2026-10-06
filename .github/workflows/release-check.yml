@@ -39,14 +39,16 @@ jobs:
           CODE=$(curl -sL -o mac.zip -w "%{http_code}" "$URL")
           [ "$CODE" = 200 ] || { echo "::error::$URL върна $CODE"; exit 1; }
           file mac.zip | grep -q "Zip archive" || { echo "::error::свалено е, но не е zip: $(file -b mac.zip)"; exit 1; }
-          TAG=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | python3 -c "import json,sys;print(json.load(sys.stdin)['tag_name'])")
+          # С токена на проверката: без него GitHub дава 60 заявки на час и понякога отказва.
+          TAG=$(curl -s -H "Authorization: Bearer ${{ github.token }}" https://api.github.com/repos/${{ github.repository }}/releases/latest | python3 -c "import json,sys;print(json.load(sys.stdin)['tag_name'])") \
+            || { echo "::error::не мога да прочета последния Release от API"; exit 1; }
           D=$(mktemp -d) && ditto -x -k mac.zip "$D"
           APP="$D/Инсталирай Сутрешен вестник.app"
           VER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
           [ "v$VER" = "$TAG" ] || { echo "::error::на сайта е версия $VER, а последният Release е $TAG"; exit 1; }
           # Като сваляне от Safari: карантина. Gatekeeper ще откаже (не е подписан при Apple), затова хората минават през „Open Anyway“.
           xattr -w com.apple.quarantine "0081;$(printf %x "$(date +%s)");Safari;" "$APP"
-          GK=$(spctl --assess --type execute -v "$APP" 2>&1 | tr '\n' ' ')
+          GK=$(spctl --assess --type execute -v "$APP" 2>&1 | tr '\n' ' ' || true)
           echo "::notice::[mac ${{ matrix.version }}] $URL → $(du -h mac.zip | cut -f1), версия $VER = $TAG; Gatekeeper: $GK"
 
       - name: Инсталиране и брой
@@ -82,9 +84,9 @@ jobs:
           if ($r.StatusCode -ne 200) { throw "$url върна $($r.StatusCode)" }
           $head = [IO.File]::ReadAllBytes("win.exe")[0..1]
           if ([Text.Encoding]::ASCII.GetString($head) -ne "MZ") { throw "свалено е, но не е .exe" }
-          $tag = (Invoke-RestMethod https://api.github.com/repos/${{ github.repository }}/releases/latest).tag_name
+          $tag = (Invoke-RestMethod https://api.github.com/repos/${{ github.repository }}/releases/latest -Headers @{ Authorization = "Bearer ${{ github.token }}" }).tag_name
           $vi = (Get-Item win.exe).VersionInfo
-          $ver = "$($vi.ProductVersion)"
+          $ver = "$($vi.ProductVersion)".Trim()
           if (-not ("v$ver" -eq $tag -or $ver.StartsWith($tag.TrimStart('v')))) { Write-Output "::warning::[windows ${{ matrix.version }}] версията в exe е '$ver', последният Release е $tag" }
           # Като сваляне от браузър: Mark of the Web. SmartScreen пита „More info → Run anyway“ само при двоен клик.
           Set-Content win.exe -Stream Zone.Identifier -Value "[ZoneTransfer]`r`nZoneId=3"
