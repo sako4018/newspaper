@@ -6,7 +6,7 @@ name: Mac installer
 on:
   push:
     branches: [main]
-    paths: ["installer/**", "app/**", "claude/**", "lite/**", "setup.py", "setup.sh", "start.sh", ".github/workflows/macos.yml"]
+    paths: ["installer/**", "app/**", "claude/**", "lite/**", "tests/**", "setup.py", "setup.sh", "start.sh", ".github/workflows/macos.yml"]
     tags: ["v*"]
   release:
     types: [published]
@@ -18,7 +18,7 @@ permissions:
 jobs:
   build:
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
@@ -36,6 +36,14 @@ jobs:
           cd "$(mktemp -d)" && ditto -x -k "$GITHUB_WORKSPACE/dist/Sutreshen-Vestnik.zip" .
           lipo -archs "Инсталирай Сутрешен вестник.app/Contents/MacOS/Installer"
           codesign --verify --deep "Инсталирай Сутрешен вестник.app"
+
+      # Целият път при човек (tests/mac_install_test.sh): zip → тихо инсталиране → брой от графика
+      # (launchd) → копие на Desktop → смяна на настройките → деинсталиране. Claude е с фалшив claude.
+      - name: Проверка Lite
+        run: bash tests/mac_install_test.sh dist/Sutreshen-Vestnik.zip lite
+
+      - name: Проверка Claude
+        run: bash tests/mac_install_test.sh dist/Sutreshen-Vestnik.zip claude
 
       - uses: actions/upload-artifact@v4
         with:
