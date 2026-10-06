@@ -671,7 +671,8 @@ def main():
         build_docx(data, items, today, weather).save(out)
         shutil.copyfile(out, BASE / "latest.docx")
         if "--no-desktop" not in sys.argv:   # всеки брой отива в папката на Desktop
-            platform_support.save_issue(out)
+            saved = platform_support.save_issue(out)
+            log.info("Копие на Desktop: %s", saved or "няма (не намирам папката Desktop)")
         log.info("Готово: %s (%d истории)", out, len(data["stories"]))
         if auto:
             notify("Готов е! {} истории — в папката „{}“ на Desktop.".format(
