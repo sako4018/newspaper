@@ -244,7 +244,21 @@ $news
 
 
 def find_claude():
-    return shutil.which("claude") or str(Path.home() / ".local/bin/claude")
+    """claude от PATH, иначе от обичайните места (графикът може да има по-къс PATH)."""
+    found = shutil.which("claude")
+    if found:
+        return found
+    home = Path.home()
+    if sys.platform == "win32":   # същите места като ClaudeInstalled в installer/windows/setup.iss
+        candidates = [home / ".local" / "bin" / "claude.exe",
+                      Path(os.environ.get("APPDATA", home / "AppData" / "Roaming")) / "npm" / "claude.cmd"]
+    else:
+        candidates = [home / ".local/bin/claude", home / ".claude/local/claude",
+                      Path("/opt/homebrew/bin/claude"), Path("/usr/local/bin/claude")]
+    for path in candidates:
+        if path.exists():
+            return str(path)
+    return str(candidates[0])
 
 
 def extract_json(text):
