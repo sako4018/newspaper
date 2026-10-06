@@ -1,0 +1,95 @@
+# „Свалено от сайта“: тегли инсталаторите точно от бутоните на сайта (docs/index.html, #btn-mac и #btn-win),
+# както браузър, проверява че са истинските файлове от последния Release и минава целия път при човек
+# с tests/mac_install_test.sh и tests/windows_install_test.ps1, за Lite и за Claude (4 задачи).
+# Пуска се след всяка успешна сборка за Mac (тогава файлът на сайта е нов), всеки понеделник и при промяна тук.
+# Резултатите и грешките са annotations (::notice:: / ::error::), които се четат от API без вход.
+name: Свалено от сайта
+
+on:
+  workflow_run:
+    workflows: ["Mac installer"]
+    types: [completed]
+  schedule:
+    - cron: "0 5 * * 1"
+  push:
+    branches: [main]
+    paths: [".github/workflows/release-check.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: release-check
+  cancel-in-progress: true
+
+jobs:
+  mac:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [lite, claude]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Сваляне от бутона „Изтегли за Mac“
+        run: |
+          URL=$(grep -o 'id="btn-mac"[^>]*href="[^"]*"' docs/index.html | sed 's/.*href="//; s/"$//')
+          [ -n "$URL" ] || { echo "::error::няма бутон #btn-mac в docs/index.html"; exit 1; }
+          CODE=$(curl -sL -o mac.zip -w "%{http_code}" "$URL")
+          [ "$CODE" = 200 ] || { echo "::error::$URL върна $CODE"; exit 1; }
+          file mac.zip | grep -q "Zip archive" || { echo "::error::свалено е, но не е zip: $(file -b mac.zip)"; exit 1; }
+          TAG=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | python3 -c "import json,sys;print(json.load(sys.stdin)['tag_name'])")
+          D=$(mktemp -d) && ditto -x -k mac.zip "$D"
+          APP="$D/Инсталирай Сутрешен вестник.app"
+          VER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
+          [ "v$VER" = "$TAG" ] || { echo "::error::на сайта е версия $VER, а последният Release е $TAG"; exit 1; }
+          # Като сваляне от Safari: карантина. Gatekeeper ще откаже (не е подписан при Apple), затова хората минават през „Open Anyway“.
+          xattr -w com.apple.quarantine "0081;$(printf %x "$(date +%s)");Safari;" "$APP"
+          GK=$(spctl --assess --type execute -v "$APP" 2>&1 | tr '\n' ' ')
+          echo "::notice::[mac ${{ matrix.version }}] $URL → $(du -h mac.zip | cut -f1), версия $VER = $TAG; Gatekeeper: $GK"
+
+      - name: Инсталиране и брой
+        run: bash tests/mac_install_test.sh mac.zip ${{ matrix.version }}
+
+  windows:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: windows-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [lite, claude]
+    env:
+      PYTHONUTF8: "1"
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5   # само за фалшивия claude; инсталаторът намира или слага свой Python
+        with:
+          python-version: "3.11"
+
+      - name: Сваляне от бутона „Изтегли за Windows“
+        run: |
+          trap { Write-Output "::error::$($_.Exception.Message)"; break }
+          $html = Get-Content docs/index.html -Raw -Encoding UTF8
+          $url = [regex]::Match($html, 'id="btn-win"[^>]*href="([^"]+)"').Groups[1].Value
+          if (-not $url) { throw "няма бутон #btn-win в docs/index.html" }
+          $r = Invoke-WebRequest $url -OutFile win.exe -PassThru -UseBasicParsing
+          if ($r.StatusCode -ne 200) { throw "$url върна $($r.StatusCode)" }
+          $head = [IO.File]::ReadAllBytes("win.exe")[0..1]
+          if ([Text.Encoding]::ASCII.GetString($head) -ne "MZ") { throw "свалено е, но не е .exe" }
+          $tag = (Invoke-RestMethod https://api.github.com/repos/${{ github.repository }}/releases/latest).tag_name
+          $vi = (Get-Item win.exe).VersionInfo
+          $ver = "$($vi.ProductVersion)"
+          if (-not ("v$ver" -eq $tag -or $ver.StartsWith($tag.TrimStart('v')))) { Write-Output "::warning::[windows ${{ matrix.version }}] версията в exe е '$ver', последният Release е $tag" }
+          # Като сваляне от браузър: Mark of the Web. SmartScreen пита „More info → Run anyway“ само при двоен клик.
+          Set-Content win.exe -Stream Zone.Identifier -Value "[ZoneTransfer]`r`nZoneId=3"
+          Unblock-File win.exe
+          Write-Output ("::notice::[windows ${{ matrix.version }}] $url → {0:N1} MB, версия '$ver', Release $tag" -f ((Get-Item win.exe).Length / 1MB))
+
+      - name: Инсталиране и брой
+        run: pwsh tests/windows_install_test.ps1 -Exe win.exe -Version ${{ matrix.version }}
