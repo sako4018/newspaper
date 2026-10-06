@@ -88,6 +88,30 @@ claude/install.sh | claude/uninstall.sh         # график 06:00 (само m
 
 Тагът не се мести и не се трие (`v1.0` остава без Release); при нужда се прави следващ номер.
 
+### Автоматични проверки на инсталирането (4 варианта)
+- **`tests/mac_install_test.sh <zip> <lite|claude>`** и **`tests/windows_install_test.ps1 -Exe <exe> -Version <lite|claude>`** минават пътя на човек:
+  1. разархивиране (Mac: двете архитектури, подписът, версията);
+  2. тихо инсталиране;
+  3. файлове, профил, график (launchd 06:30 / Task Scheduler 06:30), иконките;
+  4. **брой от самия график** (Mac: launchd пуска веднага при инсталиране; Windows: `Start-ScheduledTask`, ако не тръгне — warning и `run.py`);
+  5. копие `дд.мм.гггг чч.мм.docx` в `Desktop/Сутрешен вестник`;
+  6. Windows: „Направи брой сега“ дава втори файл;
+  7. повторно пускане на съветника (иконката за настройки) пази избора;
+  8. деинсталиране без следи (папката с броевете остава).
+- **Claude** се проверява с фалшив `claude` (`tests/fake_claude.py`): чете промпта и връща първите 8 новини във формата на `claude -p --output-format json`. Проверява всичко освен самия AI и входа в Claude.
+- **Mac съветникът има тих режим** само за проверките: `Installer --silent [--version …] [--topics bg,world] [--city Пловдив] [--time 06:30] [--print 0|1]` и `Installer --silent --uninstall`. Без аргументи започва от досегашния избор.
+- **Къде се пускат:**
+  - `windows.yml` и `macos.yml`: и двата варианта, преди Release или качване;
+  - **`release-check.yml` („Свалено от сайта“)**: 4 задачи (mac/windows × lite/claude). Тегли от адресите на бутоните в `docs/index.html`, проверява код 200, вида на файла и че версията вътре е на последния таг. Симулира сваляне от браузър (карантина на Mac, Mark of the Web на Windows) и пуска тестовете. Тръгва след всяка успешна Mac сборка, всеки понеделник и при промяна на файла.
+- **Никога не пускай `mac_install_test.sh` на собствения Mac:** пипа launchd (`com.sutreshen.vestnik`, същото име като графика от проекта) и `~/Library`.
+- Резултатите и грешките са annotations: `https://api.github.com/repos/sako4018/newspaper/check-runs/<job id>/annotations`.
+- **Само ръчно:** кликането по прозорците, Gatekeeper и SmartScreen с истински двоен клик, истински вход в Claude, Word и печатът.
+- **Резултат на 6 октомври:**
+  - сборките от `main` (`3a93874`) минават и 4-те варианта, включително брой от самия график (launchd на Mac, Task Scheduler на Windows) и копие в `Desktop/Сутрешен вестник`;
+  - файловете на сайта (`v1.0.3`): Mac Lite, Mac Claude и Windows Lite минават. Gatekeeper отказва .app (не е подписан), както се очаква, затова хората минават през „Open Anyway“;
+  - **Windows Claude от `v1.0.3` пада:** `vestnik.py` пращаше промпта с `text=True`, тоест cp1252 без кирилица. Под Task Scheduler (и на нормален Windows, без `PYTHONUTF8`) всеки сутрешен брой с Claude гърмеше. Поправено в `c537568`; стига до хората с `v1.0.4`;
+  - пак там: `find_claude` вече намира `claude.exe` и `npm\claude.cmd`, ако не са в PATH (`b99ea79`, `106836b`).
+
 ### Подробности
 - **Mac:** `installer/build.sh` → `dist/Sutreshen-Vestnik.zip`. Работи и локално, и в GitHub (ползва SDK на CommandLineTools, иначе на Xcode). Не е подписан при Apple, затова първия път macOS го спира: Done → System Settings → Privacy & Security → Open Anyway. Ръчно качване вече не трябва.
 - **Windows:** Inno Setup (`installer/windows/setup.iss`), иконка `installer/windows/icon.ico` (направена от иконата на Mac).
