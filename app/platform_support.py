@@ -50,7 +50,7 @@ def save_issue(src):
         return None
     folder = desktop / ARCHIVE_NAME
     folder.mkdir(exist_ok=True)
-    stem = time.strftime("%d.%m.%Y %H.%M")
+    stem = time.strftime("%d.%m.%Y %H.%M", time.localtime(Path(src).stat().st_mtime))   # кога е направен броят
     dst, n = folder / (stem + ".docx"), 2
     while dst.exists():
         dst, n = folder / "{} ({}).docx".format(stem, n), n + 1
